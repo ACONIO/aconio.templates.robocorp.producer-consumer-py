@@ -1,0 +1,13 @@
+{
+    "finon_credentials": {
+        "teilnehmer_id": "",
+        "benutzer_id": "",
+        "pin": ""
+    },
+    "bmd_db_credentials": {
+        "server": "",
+        "database": "",
+        "user": "",
+        "password": ""
+    }
+}

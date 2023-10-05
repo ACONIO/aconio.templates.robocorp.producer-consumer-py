@@ -1,0 +1,15 @@
+channels:
+  - conda-forge
+  
+dependencies:
+  - python=3.9.13
+  - pip=22.1.2
+  - python-mss=6.1.0  # Required by: VideoRecorder.py
+  - numpy=1.23.1      # Required by: VideoRecorder.py
+  - opencv=4.6.0      # Required by: VideoRecorder.py
+  - pynput=1.7.3      # Required by: VideoRecorder.py
+  - pip:
+      - rpaframework==27.3.0
+      - rpaframework-recognition==5.2.1 # Required for image-automation and OCR
+      - robocorp==1.0.0 # Required for plain python automations
+      - singleton-decorator==1.0.0
