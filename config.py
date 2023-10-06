@@ -1,3 +1,4 @@
+"""This file holds all configuration options of the process."""
 import os
 
 from singleton_decorator import singleton
@@ -28,14 +29,14 @@ class __Config:
     INPUT_DATA_DIR = os.environ.get(
         "TMP_ROBOT_PATH",
         # TODO: insert repository name
-        os.path.join(ROBOT_DATA_DIR, "input_data", "<process_name>"),
+        os.path.join(ROBOT_DATA_DIR, "input_data", "<repo_name>"),
     )
 
     # Path to a directory where the robot can save temporary files
     TMP_ROBOT_PATH = os.environ.get(
         "TMP_ROBOT_PATH",
         # TODO: insert repository name
-        os.path.join(ROBOT_DATA_DIR, "temp_files", "<process_name>"),
+        os.path.join(ROBOT_DATA_DIR, "temp_files", "<repo_name>"),
     )
 
     #

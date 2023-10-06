@@ -29,6 +29,7 @@ def setup(start_recording: bool = True,
 
     cleanup_robot_tmp_folder()
 
+    # TODO: uncommend required functionality below
     # if start_recording:
     #     rec.start_recording(filename='output/video.webm', max_length=10800)
 
@@ -58,6 +59,7 @@ def teardown(save_recording: bool = True,
              close_bmd: bool = True):
     """Steps performed after every robot run."""
 
+    # TODO: uncommend required functionality below
     # if close_outlook:
     #     outlook.quit_application()
 
