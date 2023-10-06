@@ -11,32 +11,21 @@ class __Config:
     # (e.g. e-mails won't be sent but only stored in drafts)
     TEST_MODE = os.environ.get("TEST_MODE")
 
-    # This directory holds the data of the robot (input data & temporary files)
-    # Per default, this directory should reside in C:\Users\<production_username>\Documents\robot_data
+    # This directory holds the data of the robot (input files & temporary files)
     ROBOT_DATA_DIR = os.environ.get(
-        "ROBOT_DATA_DIR",
-        os.path.join(
-            "c:",
-            os.sep,
-            "Users",
-            os.environ.get("USERNAME"),
-            "Documents",
-            "robot_data"
-        ),
+        "ROBOT_DATA_DIR"
     )
 
     # Path to a directory from which the robot obtains input data
-    INPUT_DATA_DIR = os.environ.get(
-        "TMP_ROBOT_PATH",
-        # TODO: insert repository name
-        os.path.join(ROBOT_DATA_DIR, "input_data", "<repo_name>"),
+    INPUT_DIR = os.environ.get(
+        "INPUT_DIR",
+        os.path.join(ROBOT_DATA_DIR, "input"),
     )
 
     # Path to a directory where the robot can save temporary files
-    TMP_ROBOT_PATH = os.environ.get(
-        "TMP_ROBOT_PATH",
-        # TODO: insert repository name
-        os.path.join(ROBOT_DATA_DIR, "temp_files", "<repo_name>"),
+    TEMP_DIR = os.environ.get(
+        "TEMP_DIR",
+        os.path.join(ROBOT_DATA_DIR, "temp"),
     )
 
     #

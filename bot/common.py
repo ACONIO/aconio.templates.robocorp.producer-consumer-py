@@ -78,4 +78,4 @@ def teardown(save_recording: bool = True,
 def cleanup_robot_tmp_folder():
     """Removes all documents from the robot temp folder to cleanup previous runs."""
     fs = FileSystem()
-    fs.remove_files(fs.list_files_in_directory(cfg.TMP_ROBOT_PATH))
+    fs.remove_files(fs.list_files_in_directory(cfg.TEMP_DIR))

@@ -19,6 +19,8 @@ environmentConfigs:
   - environment_darwin_amd64_freeze.yaml
   - conda.yaml
 
+condaConfigFile: conda.yaml
+
 artifactsDir: output
 
 PATH:

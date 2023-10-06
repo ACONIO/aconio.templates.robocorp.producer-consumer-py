@@ -18,6 +18,6 @@ testrun/*
 # Dev environment
 devdata/work-items-in/*
 devdata/work-items-out/*
-devdata/test-robot-data-dir
+devdata/robot-data-dir
 devdata/vault.json
 devdata/env.json

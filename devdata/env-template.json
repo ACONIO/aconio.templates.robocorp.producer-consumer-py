@@ -1,3 +1,4 @@
 {
-    "TEST_MODE": "True"
+    "TEST_MODE": "True",
+    "ROBOT_DATA_DIR": "C:\\Users\\<dev-user>\\documents\\robocorp_development\\<repo_name>\\devdata\\robot-data-dir"
 }
