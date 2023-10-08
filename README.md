@@ -50,6 +50,11 @@ Now, you don't need the old `conda.yaml` file anymore:
 rm conda.yaml
 ```
 
+#### 2.4. Update Locators
+Once you've pulled all dependencies you require, be sure to update your `locators.json` file with all locators used in libraries.
+
+> See section [Update Root Robot Locators (Workaround)](#update-root-robot-locators-workaround) for a guide on how to use existing locators from subtree libraries.
+
 ### 3. Uncomment Functionality in `bot/common.py`
 The `bot/common.py` file holds a lot of standard functionality that is commented-out because it would result in errors without the above library imports in place.
 
@@ -64,7 +69,14 @@ Thus, please **don't remove** the template files/directories, but use them to co
 
 > When copying the `env-template.json` and creating the `env.json`, make sure to adapt the filepath of `ROBOT_DATA_DIR`.
 
-### 5. Remove Readme Instructions
+### 5. Create Work Item Folders
+The last step required is to create a `work-items-in` and `work-items-out` folder, both holding a `work-items.json` file.
+
+For the `work-items-in`, you can use the `work-items-in-template` folder, which can also be adapted to meet the required work item variables structure.
+
+The `work-items-out` folder offers no template, thus it must be created manually.
+
+### 6. Remove Readme Instructions
 Once you've completed all steps above, you can remove this section from the `README.md`.
 
 ---

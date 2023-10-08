@@ -1,8 +1,9 @@
 """This file contains shared functions used by multiple tasks."""
 
+import os
+
 from robocorp import log
 from robocorp import vault
-from RPA.FileSystem import FileSystem
 
 from config import cfg
 
@@ -58,24 +59,29 @@ def teardown(save_recording: bool = True,
              close_outlook: bool = True,
              close_bmd: bool = True):
     """Steps performed after every robot run."""
-
     # TODO: uncommend required functionality below
-    # if close_outlook:
-    #     outlook.quit_application()
+    # try:
+    #     if close_outlook:
+    #         outlook.quit_application()
 
-    # if close_bmd:
-    #     bmd.close_bmd()
-
-    # if save_recording:
-    #     rec.stop_recorder()
-    # else:
-    #     try:
-    #         rec.cancel_recorder()
-    #     except:
-    #         log.info('could not cancel recording')
+    #     if close_bmd:
+    #         bmd.close_bmd()
+    # except Exception as err:
+    #     log.info(f'failed to teardown process: {str(err)}')
+    # finally:
+    #     # recorder must always be stopped
+    #     if save_recording:
+    #         rec.stop_recorder()
+    #     else:
+    #         try:
+    #             rec.cancel_recorder()
+    #         except:
+    #             log.info('could not cancel recording')
 
 
 def cleanup_robot_tmp_folder():
     """Removes all documents from the robot temp folder to cleanup previous runs."""
-    fs = FileSystem()
-    fs.remove_files(fs.list_files_in_directory(cfg.TEMP_DIR))
+    for file_name in os.listdir(cfg.TEMP_DIR):
+        file = cfg.TEMP_DIR + file_name
+        if os.path.isfile(file):
+            os.remove(file)

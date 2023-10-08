@@ -3,22 +3,25 @@ performs mainly work item management and error-handling."""
 
 from robocorp.tasks import task
 from robocorp import workitems
+from robocorp import log
 
 from bot.common import setup, teardown
-from bot import consumer
-from bot import producer
+from bot.consumer import run as run_consumer
+from bot.producer import run as run_producer
 
 
 @task
 def producer():
     """Create output work items for the consumer."""
-    setup()
 
     try:
-        wi_payloads = producer.run()
+        setup()
+        wi_payloads = run_producer()
 
         for payload in wi_payloads:
             workitems.outputs.create(payload)
+    except Exception as err:
+        log.exception(str(err))
     finally:
         teardown()
 
@@ -26,12 +29,12 @@ def producer():
 @task
 def consumer():
     """Process all the work items created by the producer."""
-    setup()
 
     try:
+        setup()
         for item in workitems.inputs:
             try:
-                consumer.run()
+                run_consumer()
                 item.done()
 
             # TODO: adapt exceptions below
@@ -40,6 +43,7 @@ def consumer():
             except KeyError as err:
                 item.fail("APPLICATION", code="MISSING_FIELD",
                           message=str(err))
-
+    except Exception as err:
+        log.exception(str(err))
     finally:
         teardown()
