@@ -4,17 +4,13 @@ import os
 from singleton_decorator import singleton
 
 
-@singleton
-class __Config:
-
+class Config:
     # If this mode is enabled, the robot will take no "critical" action
     # (e.g. e-mails won't be sent but only stored in drafts)
-    TEST_MODE = os.environ.get("TEST_MODE")
+    TEST_MODE = os.environ.get("TEST_MODE") == "True"
 
     # This directory holds the data of the robot (input files & temporary files)
-    ROBOT_DATA_DIR = os.environ.get(
-        "ROBOT_DATA_DIR"
-    )
+    ROBOT_DATA_DIR = os.environ.get("ROBOT_DATA_DIR")
 
     # Path to a directory from which the robot obtains input data
     INPUT_DIR = os.environ.get(
@@ -38,14 +34,30 @@ class __Config:
     # The BMD executable file
     BMD_EXECUTABLE = os.environ.get(
         "BMD_EXECUTABLE",
-        os.path.join(
-            os.environ.get("BMDNTCSDIR"),
-            "BMDNTCS.exe"
-        ),
+        os.path.join(os.environ.get("BMDNTCSDIR"), "BMDNTCS.exe"),
     )
 
     # Command to start BMD
     BMD_EXEC_CMD = " ".join([BMD_EXECUTABLE, BMD_EXEC_PARAMS])
 
 
-cfg = __Config()
+@singleton
+class ProducerConfig(Config):
+    """Configuration of the producer process."""
+
+    # Add properties here...
+
+    def __init__(self):
+        super().__init__()
+        # Add property validation here...
+
+
+@singleton
+class ConsumerConfig(Config):
+    """Configuration of the consumer process."""
+
+    # Add properties here...
+
+    def __init__(self):
+        super().__init__()
+        # Add property validation here
