@@ -1,3 +1,4 @@
+from abc import ABC
 from enum import StrEnum
 
 from config import *
@@ -11,31 +12,44 @@ class RobotType(StrEnum):
     DEFAULT = "DEFAULT"  # mainly used for testing
 
 
-class RunContext:
-    """This class manages the run context of the process. It offers setup and teardown functionality
-    that initializes resources (mainly library objects) required by the process and manages the
-    resources cleanup when the process run is completed.
-    """
-
-    cfg: Config
-
-    def __init__(
-        self,
+class RunContextFactory:
+    def make(
         process_type: RobotType,
         start_recording: bool = False,
         init_bmd_db: bool = False,
         init_bmd_macros: bool = False,
         start_bmd: bool = False,
         start_outlook: bool = False,
+    ):
+        if process_type == RobotType.PRODUCER:
+            return RunContextProducer(
+                start_recording, init_bmd_db, init_bmd_macros, start_bmd, start_outlook
+            )
+        elif process_type == RobotType.CONSUMER:
+            return RunContextConsumer(
+                start_recording, init_bmd_db, init_bmd_macros, start_bmd, start_outlook
+            )
+        elif process_type == RobotType.DEFAULT:
+            return RunContextDefault(
+                start_recording, init_bmd_db, init_bmd_macros, start_bmd, start_outlook
+            )
+
+
+class RunContextBase(ABC):
+    """This class manages the run context of the process. It offers setup and teardown functionality
+    that initializes resources (mainly library objects) required by the process and manages the
+    resources cleanup when the process run is completed.
+    """
+
+    def __init__(
+        self,
+        start_recording: bool,
+        init_bmd_db: bool,
+        init_bmd_macros: bool,
+        start_bmd: bool,
+        start_outlook: bool,
     ) -> None:
         """Configure the process run context. Load the required libraries and init the config."""
-
-        if process_type == RobotType.PRODUCER:
-            self.cfg = ProducerConfig()
-        elif process_type == RobotType.CONSUMER:
-            self.cfg = ConsumerConfig()
-        elif process_type == RobotType.DEFAULT:
-            self.cfg = Config()
 
         self.start_recording = start_recording
         self.init_bmd_db = init_bmd_db
@@ -88,3 +102,21 @@ class RunContext:
 
         # if self.start_recording:
         #     self.rec.stop_recorder()
+
+
+class RunContextProducer(RunContextBase):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.cfg = ProducerConfig()
+
+
+class RunContextConsumer(RunContextBase):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.cfg = ConsumerConfig()
+
+
+class RunContextDefault(RunContextBase):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.cfg = Config()

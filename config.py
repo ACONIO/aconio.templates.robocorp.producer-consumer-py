@@ -1,8 +1,6 @@
 """This file holds all configuration options of the process."""
 import os
 
-from singleton_decorator import singleton
-
 
 class Config:
     # If this mode is enabled, the robot will take no "critical" action
@@ -41,7 +39,6 @@ class Config:
     BMD_EXEC_CMD = " ".join([BMD_EXECUTABLE, BMD_EXEC_PARAMS])
 
 
-@singleton
 class ProducerConfig(Config):
     """Configuration of the producer process."""
 
@@ -52,7 +49,6 @@ class ProducerConfig(Config):
         # Add property validation here...
 
 
-@singleton
 class ConsumerConfig(Config):
     """Configuration of the consumer process."""
 
