@@ -9,13 +9,11 @@ from bot.context import (
     RunContextFactory,
     RunContextProducer,
     RunContextConsumer,
-    RunContextDefault,
     RobotType,
 )
 from bot.common import cleanup_robot_tmp_folder
 from bot.consumer import run as run_consumer
 from bot.producer import run as run_producer
-from config import ProducerConfig
 
 
 @task

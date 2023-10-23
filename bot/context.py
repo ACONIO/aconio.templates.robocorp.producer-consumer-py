@@ -1,12 +1,12 @@
 from abc import ABC
-from enum import StrEnum
+from enum import Enum
 
 from config import *
 
 # from libraries.BoxIt import BoxIt # If BoxIT Process, uncomment this line
 
 
-class RobotType(StrEnum):
+class RobotType(str, Enum):
     PRODUCER = "PRODUCER"
     CONSUMER = "CONSUMER"
     DEFAULT = "DEFAULT"  # mainly used for testing
@@ -23,15 +23,27 @@ class RunContextFactory:
     ):
         if process_type == RobotType.PRODUCER:
             return RunContextProducer(
-                start_recording, init_bmd_db, init_bmd_macros, start_bmd, start_outlook
+                start_recording=start_recording,
+                init_bmd_db=init_bmd_db,
+                init_bmd_macros=init_bmd_macros,
+                start_bmd=start_bmd,
+                start_outlook=start_outlook,
             )
         elif process_type == RobotType.CONSUMER:
             return RunContextConsumer(
-                start_recording, init_bmd_db, init_bmd_macros, start_bmd, start_outlook
+                start_recording=start_recording,
+                init_bmd_db=init_bmd_db,
+                init_bmd_macros=init_bmd_macros,
+                start_bmd=start_bmd,
+                start_outlook=start_outlook,
             )
         elif process_type == RobotType.DEFAULT:
             return RunContextDefault(
-                start_recording, init_bmd_db, init_bmd_macros, start_bmd, start_outlook
+                start_recording=start_recording,
+                init_bmd_db=init_bmd_db,
+                init_bmd_macros=init_bmd_macros,
+                start_bmd=start_bmd,
+                start_outlook=start_outlook,
             )
 
 
@@ -41,21 +53,14 @@ class RunContextBase(ABC):
     resources cleanup when the process run is completed.
     """
 
-    def __init__(
-        self,
-        start_recording: bool,
-        init_bmd_db: bool,
-        init_bmd_macros: bool,
-        start_bmd: bool,
-        start_outlook: bool,
-    ) -> None:
+    def __init__(self, **kwargs) -> None:
         """Configure the process run context. Load the required libraries and init the config."""
 
-        self.start_recording = start_recording
-        self.init_bmd_db = init_bmd_db
-        self.init_bmd_macros = init_bmd_macros
-        self.start_bmd = start_bmd
-        self.start_outlook = start_outlook
+        self.start_recording = kwargs.get("start_recording", False)
+        self.init_bmd_db = kwargs.get("init_bmd_db", False)
+        self.init_bmd_macros = kwargs.get("init_bmd_macros", False)
+        self.start_bmd = kwargs.get("start_bmd", False)
+        self.start_outlook = kwargs.get("start_outlook", False)
 
         # If BoxIT Process, create BoxIt object
         # self.boxit = BoxIt()
