@@ -3,8 +3,6 @@ from enum import Enum
 
 from config import *
 
-# from libraries.BoxIt import BoxIt # If BoxIT Process, uncomment this line
-
 
 class RobotType(str, Enum):
     PRODUCER = "PRODUCER"
@@ -61,9 +59,6 @@ class RunContextBase(ABC):
         self.init_bmd_macros = kwargs.get("init_bmd_macros", False)
         self.start_bmd = kwargs.get("start_bmd", False)
         self.start_outlook = kwargs.get("start_outlook", False)
-
-        # If BoxIT Process, create BoxIt object
-        # self.boxit = BoxIt()
 
     def __enter__(self) -> None:
         """Steps performed before every robot run."""
