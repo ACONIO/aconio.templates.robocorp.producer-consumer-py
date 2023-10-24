@@ -3,8 +3,6 @@
 from typing import List
 from robocorp import log
 
-from config import cfg
-
 
 def run() -> List[dict[str, str]]:
     """Creates a list of work item payloads."""

@@ -2,8 +2,6 @@
 
 from robocorp import log
 
-from config import cfg
-
 
 def run():
     """Processes one work item."""
