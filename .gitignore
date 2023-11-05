@@ -20,3 +20,6 @@ devdata/work-items-out/*
 devdata/robot-data-dir
 devdata/vault.json
 devdata/env.json
+devdata/env-testing.json
+devdata/env-consumer*.json
+devdata/env-producer*.json
