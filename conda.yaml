@@ -1,15 +1,17 @@
 channels:
   - conda-forge
-  
+
 dependencies:
-  - python=3.9.13
+  - python=3.11.6
   - pip=22.1.2
+  - pymssql=2.2.5     # Required by: BMDDatabase.py
   - python-mss=6.1.0  # Required by: VideoRecorder.py
-  - numpy=1.23.1      # Required by: VideoRecorder.py
+  - numpy=1.26.0      # Required by: VideoRecorder.py
   - opencv=4.6.0      # Required by: VideoRecorder.py
-  - pynput=1.7.3      # Required by: VideoRecorder.py
   - pip:
+      - pynput==1.7.6      # Required by: VideoRecorder.py
       - rpaframework==27.3.0
-      - rpaframework-recognition==5.2.1 # Required for image-automation and OCR
-      - robocorp==1.0.0 # Required for plain python automations
-      - singleton-decorator==1.0.0
+      - rpaframework-recognition==5.2.1   # Required for image-automation and OCR
+      - robocorp==1.2.0                   # Required for plain python automations
+      - robocorp-browser==2.2.1           # Required for plain python browser automations
+      - singleton-decorator==1.0.0        # Required for plain python automations
