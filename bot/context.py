@@ -1,7 +1,7 @@
 from abc import ABC
 from enum import Enum
 
-from config import *
+from .config import *
 
 
 class RobotType(str, Enum):
@@ -63,7 +63,7 @@ class RunContextBase(ABC):
     def __enter__(self) -> None:
         """Steps performed before every robot run."""
         pass
-        # Uncomment after adding the respective libraries.
+        # TODO: Uncomment after adding the respective libraries.
         # if self.start_recording:
         #     from shared.utils.libraries.VideoRecorder import VideoRecorder
         #     self.rec = VideoRecorder()
@@ -93,7 +93,7 @@ class RunContextBase(ABC):
     def __exit__(self, exc_type, exc_value, exc_tb) -> None:
         """Steps performed after every robot run."""
         pass
-        # Uncomment after adding the respective libraries.
+        # TODO: Uncomment after adding the respective libraries.
         # if self.start_outlook:
         #     self.outlook.quit_application()
 

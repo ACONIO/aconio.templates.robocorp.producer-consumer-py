@@ -3,7 +3,6 @@ performs mainly work item management and error-handling."""
 
 from robocorp.tasks import task
 from robocorp import workitems
-from robocorp import log
 
 from bot.context import (
     RunContextFactory,
@@ -22,7 +21,7 @@ def producer():
 
     ctx: RunContextProducer = RunContextFactory.make(
         RobotType.PRODUCER
-    )  # Change the constructor arguments as wished.
+    )  # TODO: Change the constructor arguments as required.
 
     with ctx:
         cleanup_robot_tmp_folder(ctx.cfg.TEMP_DIR)
@@ -39,7 +38,7 @@ def consumer():
 
     ctx: RunContextConsumer = RunContextFactory.make(
         RobotType.CONSUMER
-    )  # Change the constructor arguments as wished.
+    )  # TODO: Change the constructor arguments as required.
 
     with ctx:
         for item in workitems.inputs:
