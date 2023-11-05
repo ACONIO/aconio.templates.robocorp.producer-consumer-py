@@ -5,7 +5,7 @@ import os
 class Config:
     # If this mode is enabled, the robot will take no "critical" action
     # (e.g. e-mails won't be sent but only stored in drafts)
-    TEST_MODE = os.environ.get("TEST_MODE") == "True"
+    TEST_MODE = os.environ.get("TEST_MODE").lower() == 'true'
 
     # This directory holds the data of the robot (input files & temporary files)
     ROBOT_DATA_DIR = os.environ.get("ROBOT_DATA_DIR")
@@ -42,18 +42,18 @@ class Config:
 class ProducerConfig(Config):
     """Configuration of the producer process."""
 
-    # Add properties here...
+    # TODO: Add properties here...
 
     def __init__(self):
         super().__init__()
-        # Add property validation here...
+        # TODO: Add property validation here...
 
 
 class ConsumerConfig(Config):
     """Configuration of the consumer process."""
 
-    # Add properties here...
+    # TODO: Add properties here...
 
     def __init__(self):
         super().__init__()
-        # Add property validation here
+        # TODO: Add property validation here
