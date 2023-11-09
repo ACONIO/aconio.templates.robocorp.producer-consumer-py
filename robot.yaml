@@ -1,14 +1,14 @@
 tasks:
-  # rcc run -e "devdata/env.json" --task "Producer"
+  # rcc run -e "devdata/env-producer.json" --task "Producer"
   Producer:
     shell: python -m robocorp.tasks run tasks.py -t producer
   
-  # rcc run -e "devdata/env.json" --task "Consumer"
+  # rcc run -e "devdata/env-consumer.json" --task "Consumer"
   Consumer:
     shell: python -m robocorp.tasks run tasks.py -t consumer
 
 devTasks:
-  # rcc run -e "devdata/env.json" --dev --task "Generic Test"
+  # rcc run -e "devdata/env-testing.json" --dev --task "Generic Test"
   Generic Test:
     shell: python -m robocorp.tasks run tests.py -t generic_test
 
