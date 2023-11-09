@@ -1,9 +1,13 @@
 """This file contains functions utilized by the producer."""
 
 from typing import List
+
 from robocorp import log
 
+from .internal.tools import run_function
 
+
+@run_function
 def run() -> List[dict[str, str]]:
     """Creates a list of work item payloads."""
     output_work_items = []
