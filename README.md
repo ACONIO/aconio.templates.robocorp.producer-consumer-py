@@ -55,33 +55,26 @@ Once you've pulled all dependencies you require, be sure to update your `locator
 
 > See section [Update Root Robot Locators (Workaround)](#update-root-robot-locators-workaround) for a guide on how to use existing locators from subtree libraries.
 
-### 3. Uncomment Functionality in `bot/common.py`
-The `bot/common.py` file holds a lot of standard functionality that is commented-out because it would result in errors without the above library imports in place.
-
-Thus, after the required libraries have been imported, open `bot/common.py`, search for `TODO` and uncomment everything you need for the robot.
-
-### 4. Copy Templates
+### 3. Copy Templates
 The `devdata` directory holds a template folder for the `robot-data-dir`, `env.json`, and `vault.json`.
 
-This is because those files/directories are excluded from the repository in the `.gitignore`, due to them possibly containing sensitive data. Via the template files/directory, a developer easily has a template in place that can be copied and filled with the required data.
+This is because those files/directories are excluded from the repository in the `.gitignore`, due to them possibly containing sensitive data. Via the template files and directories, developers have a template in place that can be copied and filled with the required data.
 
 Thus, please **don't remove** the template files/directories, but use them to configure your dev environment.
 
-> When copying the `env-template.json` and creating the `env.json`, make sure to adapt the filepath of `ROBOT_DATA_DIR`.
-
-### 5. Create Work Item Folders
+### 4. Create Work Item Folders
 The last step required is to create a `work-items-in` and `work-items-out` folder, both holding a `work-items.json` file.
 
 For the `work-items-in`, you can use the `work-items-in-template` folder, which can also be adapted to meet the required work item variables structure.
 
 The `work-items-out` folder offers no template, thus it must be created manually.
 
-### 6. Remove Readme Instructions
+### 5. Remove Readme Instructions
 Once you've completed all steps above, you can remove this section from the `README.md`.
 
 ---
 ## Description & Robot Logic
-<TODO: Explain robot>
+<TODO: Explain robot here>
 
 ## Repository Components & Project Structure
 The following offers a short explanation of each component (files & folders) contained within this robot project.
@@ -94,20 +87,20 @@ As a best practice, the required `rcc` command to run a certain task in the deve
 **Example:**
 ```yaml
 tasks:
-    # rcc run -e "devdata/env.json" --task "Producer"
+    # rcc run -e "devdata/env-producer.json" --task "Producer"
     Producer:
         shell: python -m robocorp.tasks run tasks.py -t producer
 ```
 
 ### `conda.yaml`
-Here, the dependencies of the project are defined. See our [ACONIO Robocorp-Environments Repository](https://github.com/ACONIO/aconio.common.robocorp-environments) for a set of organization-wide `conda.yaml` files, which are recommended to use in order to maintain consistency over our robot projects, and keep Holotree disk usage low.
+Here, the dependencies of the project are defined. See our [ACONIO Robocorp-Environments Repository](https://github.com/ACONIO/aconio.common.robocorp-environments) for a set of organization-wide `conda.yaml` files, which are recommended to use in order to maintain consistency over our robot projects.
 
 See [the official Robocorp documentation on environment control](https://robocorp.com/docs/setup/environment-control) for more info.
 
 ### `tasks.py`
 Within this file, the most high-level logic of the robot is defined. It is solely responsible for starting the individual robot tasks (e.g. `Consumer` and `Producer`), handling possible errors, and managing work items (e.g. creating work items when it's a **Producer** taks, or consuming work items when it's a **Consumer** task).
 
-As a best practice, the individual task files (e.g. `bot/producer.py` or `bot/consumer.py`) should always offer a `run()` function, which should be the only taks-specific function invoked within the `tasks.py` file.
+As a best practice, the individual task files (e.g. `bot/producer.py` or `bot/consumer.py`) should always offer a `run()` function, which should be the only taks-specific function invoked within the `tasks.py` file to keep the `tasks.py` file clean and reduce duplicate code.
 
 ### `tests.py`
 The `tests.py` file holds a set of common test-cases that are required multiple times during robot development. This not only entails unit-tests, but also tasks for integration testing multiple logically coherent steps.
@@ -117,17 +110,13 @@ For each test case in the `tests.py` file, there's also a corresponding entry in
 **Example:**
 ```yaml
 devTasks:
-  # rcc run -e "devdata/env.json" --dev --task "Generic Test"
+  # rcc run -e "devdata/env-testing.json" --dev --task "Generic Test"
   Generic Test:
     shell: python -m robocorp.tasks run tests.py -t generic_test
 ```
 
 #### The Generic Test
 The `tests.py` file always contains one `generic_test` function. The purpose of this function is to provide a way for the developer to easily test small bits of code without running the whole producer taks, or creating a separate test case only for a minor test.
-
-
-### `config.py`
-Here, all configuration options of the robot are contained in the `Config` class, which loads the configuration from environment variables, or sets a default vaule if available. Using this file, a developer can quickly inspect all available configuration options of the robot.
 
 ### `locators.json`
 This file holds a set of locators (mainly image locators) used by the `RPA.Desktop` library throughout the robot. The locators defined in the `locators.json` file can be referenced from the code by using the `alias` directive (see the [RPA.Desktop documentation](https://robocorp.com/docs/libraries/rpa-framework/rpa-desktop) for more info).
@@ -137,11 +126,20 @@ This file holds a set of locators (mainly image locators) used by the `RPA.Deskt
 > See section [Update Root Robot Locators (Workaround)](#update-root-robot-locators-workaround) for a guide on how to use existing locators from subtree libraries.
 
 ### The `bot` Directory
-This directory holds the main functionality of all robot tasks. For each taks in the robot, a `.py` file should be held within this directory. For example, if the project defines a `Producer` and a `Consumer` task, the `bot directory` should hold a `producer.py` and a `consumer.py` that hold the main functionality of the tasks.
+This directory holds the main functionality of all robot tasks. For each taks in the robot, a `.py` file should be held within this directory. For example, if the project defines a `Producer` and a `Consumer` task, the `bot directory` should hold a `producer.py` and a `consumer.py` that hold the main functionality of the tasks. If the project contains multiple consumer or producer files, a short name should be specified for the task, i.e. `consumer_<shortname>.py`.
 
-As a best pratice, each task-specific file (e.g. `producer.py`) should provide a `run()` function which is invoked by the task function in `tasks.py` and hols the high-level logic of this specific task.
+In addition to the task-specific files, the `bot` directory also offers a `common.py` file, which holds functions that are used across multiple tasks (e.g. `cleanup_robot_tmp_folder()`).
 
-In addition to the task-specific files, the `bot` directory also offers a `common.py` file, which holds functions that are used across multiple tasks (e.g. `setup()` and `teardown()`).
+The `bot` directory also holds an `internal` folder that contains all the files that offer important base-functionality for the robot, but do not directly contain the actual code of the automation (for example the robot configuration, a context manager, utils, ...).
+
+- `internal/config.py`
+  - Here, all configuration options of the individual tasks are held
+- `internal/context.py`
+  - This file holds the context manager of the bot, which is responsible for initialization and teardown of all the libraries and applications used within the process
+- `internal/errors.py`
+  - The errors contained within this file can be used to represent the commonly used `Application Error` and `Business Error` in RPA automations. Such errors will be automatically handeled appropriately through the Robocorp work items library
+- `internal/tools.py`
+  - Here we keep different utils and tools that can be used across the project
 
 ### The `devdata` Directory
 Here, all files relevant for the development process are held. For more information about the `env.json` and `vault.json` see [environment variables](https://robocorp.com/docs/development-guide/variables-and-secrets/configuring-robots-using-environment-variables) and [local vault file](https://robocorp.com/docs/development-guide/variables-and-secrets/vault#local-vault-file-an-alternative-way-for-storing-local-secrets) from the official Robocorp documentation.
