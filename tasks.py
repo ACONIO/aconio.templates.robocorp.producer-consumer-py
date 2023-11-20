@@ -4,7 +4,7 @@ performs mainly work item management and error-handling."""
 from robocorp.tasks import task
 from robocorp import workitems
 
-from bot.context import (
+from bot.internal.context import (
     RunContextFactory,
     RunContextProducer,
     RunContextConsumer,
