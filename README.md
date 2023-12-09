@@ -15,24 +15,21 @@ When using this template, there are a few dependencies that must be pulled in or
 Get the newest version of the utils library which is required for the video recording and some Outlook functionality:
 
 ```bash
-git remote add -f aconio-library-utils https://github.com/ACONIO/aconio.libraries.robocorp.utils.git
-git subtree add --prefix shared/utils aconio-library-utils main --squash
+python scripts/add_subtree.py https://github.com/ACONIO/aconio.libraries.robocorp.utils.git utils
 ```
 
 #### 2.2. BMD Library Subtree
 If the project requires BMD functionality, be sure to also pull the BMD library:
 
 ```bash
-git remote add -f aconio-library-bmd https://github.com/ACONIO/aconio.libraries.robocorp.bmd.git
-git subtree add --prefix shared/bmd aconio-library-bmd main --squash
+python scripts/add_subtree.py https://github.com/ACONIO/aconio.libraries.robocorp.bmd.git bmd
 ```
 
 #### 2.3. Using The Organization-Wide `conda.yaml`
 If one of the organization-wide `conda.yaml` environments from the [ACONIO Robocorp-Environments Repository](https://github.com/ACONIO/aconio.common.robocorp-environments) fits your process requirements, make sure to also pull this library and use the correct `conda.yaml` file:
 
 ```bash
-git remote add -f aconio-robocorp-conda https://github.com/ACONIO/aconio.common.robocorp-environments.git
-git subtree add --prefix shared/conda aconio-robocorp-conda main --squash
+python scripts/add_subtree.py https://github.com/ACONIO/aconio.common.robocorp-environments.git conda
 ```
 
 Once the new `conda.yaml` file is pulled, update your `robot.yaml` file by specifying the correct environment configuration file:
