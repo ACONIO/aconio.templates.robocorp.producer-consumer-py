@@ -10,8 +10,10 @@ dependencies:
   - opencv=4.6.0      # Required by: VideoRecorder.py
   - pip:
       - pynput==1.7.6      # Required by: VideoRecorder.py
-      - rpaframework==27.5.2
+      - rpaframework==27.7.0
       - rpaframework-recognition==5.2.3   # Required for image-automation and OCR
       - robocorp==1.2.4                   # Required for plain python automations
       - robocorp-browser==2.2.1           # Required for plain python browser automations
+      - robocorp-windows==0.0.1           # Required for plain python windows automations
       - singleton-decorator==1.0.0        # Required for plain python automations
+      - jinja2==3.1.2                     # Template engine
