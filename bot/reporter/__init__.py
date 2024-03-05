@@ -2,10 +2,10 @@ import datetime
 
 from robocorp import workitems
 
-from bot.core import tools
+from bot.core import decorators
 from bot.core import context
 
-@tools.run_function
+@decorators.run_function
 def run(ctx: context.RunContextReporter, inputs: list[workitems.Input]):
     content = generate_report(
         ctx=ctx,
