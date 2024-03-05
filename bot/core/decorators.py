@@ -2,7 +2,7 @@ import functools
 
 from robocorp import log, workitems
 
-from bot.core import errors, workitem
+from bot.core import errors, items
 
 
 def run_function(func):
@@ -37,7 +37,7 @@ def attach_reporter(run_function):
                 item = workitems.inputs.current
 
                 workitems.outputs.create(
-                    workitem.ReporterWorkItem(
+                    items.ReporterItem(
                         failed_wi_id=item.id,
                         failed_wi_code=e.code,
                         failed_wi_payload=item.payload

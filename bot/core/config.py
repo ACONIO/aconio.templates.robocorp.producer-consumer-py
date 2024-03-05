@@ -42,6 +42,10 @@ class Config:
 class ProducerConfig(Config):
     """Configuration of the producer process."""
 
+    #
+    # General Config
+    #
+
     # Maximum amount of work items created by the producer
     MAX_WORK_ITEMS = os.environ.get("MAX_WORK_ITEMS")
 
