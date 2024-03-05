@@ -1,50 +1,66 @@
 """This file holds the high-level logic of the process and
 performs mainly work item management and error-handling."""
 
-from robocorp.tasks import task
-from robocorp import workitems
+import faulthandler
 
-from bot.internal.context import (
-    RunContextFactory,
-    RunContextProducer,
-    RunContextConsumer,
-    RobotType,
-)
-from bot.common import cleanup_robot_tmp_folder
-from bot.consumer import run as run_consumer
-from bot.producer import run as run_producer
+import bot.consumer
+import bot.producer
+import bot.reporter
+
+from robocorp import log, workitems, tasks
+
+from bot.core import context, utils
 
 
-@task
+faulthandler.disable()
+
+
+@tasks.task
 def producer():
-    """Create output work items for the consumer."""
+    """ Create output work items for the consumer. """
 
-    ctx: RunContextProducer = RunContextFactory.make(
-        RobotType.PRODUCER
-    )  # TODO: Change the constructor arguments as required.
-
+    ctx = context.RunContextProducer(
+        # TODO: ADD CONFIGURATION.
+    )
     with ctx:
-        cleanup_robot_tmp_folder(ctx.cfg.TEMP_DIR)
+        for wi in bot.producer.run(ctx):
+            log.console_message(
+                f"Creating for item for client '{wi.client_id}...'\n",
+                "stdout",
+            )
+            workitems.outputs.create(wi.to_dict())
 
-        wi_payloads = run_producer(ctx)
 
-        for payload in wi_payloads:
-            workitems.outputs.create(payload)
-
-
-@task
+@tasks.task
 def consumer():
-    """Process all the work items created by the producer."""
+    """ Process all the work items created by the producer. """
 
-    ctx: RunContextConsumer = RunContextFactory.make(
-        RobotType.CONSUMER
-    )  # TODO: Change the constructor arguments as required.
+    ctx = context.RunContextConsumer(
+        # TODO: ADD CONFIGURATION.
+    )
 
     with ctx:
         for item in workitems.inputs:
             with item:
-                cleanup_robot_tmp_folder(ctx.cfg.TEMP_DIR)
+                utils.cleanup_folder(path=ctx.cfg.TEMP_DIR)
 
-                run_consumer(ctx, item)
+                bot.consumer.run(ctx, item)
 
-                item.done()
+                if ctx.cfg.TRACK_ITEMS_ASSET_NAME:
+                    pass
+                    # TODO: UNCOMMENT ON DEMAND.
+                    # log.console_message(
+                    #     "Increasing processed items counter asset "
+                    #     f"'{ctx.cfg.TRACK_ITEMS_ASSET_NAME}' by 1\n",
+                    #     "stdout"
+                    # )
+                    # ctx.item_counter.increment()
+
+
+@tasks.task
+def reporter():
+    """ Reports expected failures (BREs) from the consumer to the employee. """
+
+    ctx = context.RunContextReporter(start_outlook=True)
+    with ctx:
+        bot.reporter.run(ctx=ctx, inputs=list(workitems.inputs))
