@@ -178,3 +178,9 @@ python scripts/update_locators.py
 ```
 
 > **Note:** If the library is updated with a new locator, the script has to be executed again!
+
+### Linting
+
+For linting we use Visual Studio Code's [pylint extension](https://marketplace.visualstudio.com/items?itemName=ms-python.pylint) with Google's pylintrc file. Make sure to copy the `settings.json` file in your `.vscode` repository. In rare cases it is necessary to restart the linting server in vscode: `CMD+SHIFT+P > "Pylint: Restart Server" > ENTER`
+
+We try to adhere to Google's Python [styleguide](https://google.github.io/styleguide/pyguide.html).
