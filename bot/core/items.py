@@ -1,8 +1,6 @@
 import dataclasses
 import dataclasses_json as dj
 
-from robocorp import log
-
 
 @dataclasses.dataclass
 class Item(dj.DataClassJsonMixin):

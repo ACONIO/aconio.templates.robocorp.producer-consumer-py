@@ -1,16 +1,21 @@
+import jinja2
+
 from abc import ABC
 
 from bot.core import configs
 
 
 class RunContextBase(ABC):
-    """This class manages the run context of the process. It offers setup and teardown functionality
-    that initializes resources (mainly library objects) required by the process and manages the
+    """This class manages the run context of the process.
+    It offers setup and teardown functionality that initializes resources
+    (mainly library objects) required by the process and manages the
     resources cleanup when the process run is completed.
     """
 
     def __init__(self, **kwargs) -> None:
-        """Configure the process run context. Load the required libraries and init the config."""
+        """Configure the process run context. 
+        Load the required libraries and init the config.
+        """
 
         self.start_recording = kwargs.get("start_recording", False)
         self.init_bmd_db = kwargs.get("init_bmd_db", False)
@@ -95,12 +100,10 @@ class RunContextConsumer(RunContextBase):
         self.cfg = configs.ConsumerConfig()
 
         # init jinja2 environment holding all template files
-        from jinja2 import Environment, FileSystemLoader, StrictUndefined
-
-        self.jinja_env = Environment(
-            loader=FileSystemLoader(self.cfg.TEMPLATES),
+        self.jinja_env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(self.cfg.TEMPLATES),
             # throw is some variable is present in the template but not passed
-            undefined=StrictUndefined,
+            undefined=jinja2.StrictUndefined,
         )
 
         if self.cfg.TRACK_ITEMS_ASSET_NAME:
@@ -115,13 +118,10 @@ class RunContextReporter(RunContextBase):
         super().__init__(**kwargs)
         self.cfg = configs.ReporterConfig()
 
-        # init jinja2 environment holding all template files
-        from jinja2 import Environment, FileSystemLoader, StrictUndefined
-
-        self.jinja_env = Environment(
-            loader=FileSystemLoader(self.cfg.TEMPLATES),
+        self.jinja_env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(self.cfg.TEMPLATES),
             # throw is some variable is present in the template but not passed
-            undefined=StrictUndefined,
+            undefined=jinja2.StrictUndefined,
         )
 
 

@@ -38,9 +38,12 @@ class Config:
     # Command to start BMD
     BMD_EXEC_CMD = " ".join([BMD_EXECUTABLE, BMD_EXEC_PARAMS])
 
-    # Track the 'Frist' IDs of the cases where the employee gets informed, preventing those
-    # 'Fristen' from being processed twice, since they are not automatically set to done
-    TRACK_ALERTS_ASSET_NAME = os.environ.get("TRACK_ALERTS_ASSET_NAME", "vz_alert_cases")
+    # Track the 'Frist' IDs of the cases where the employee gets informed,
+    # preventing those 'Fristen' from being processed twice,
+    # since they are not automatically set to done
+    TRACK_ALERTS_ASSET_NAME = os.environ.get(
+        "TRACK_ALERTS_ASSET_NAME", "vz_alert_cases"
+    )
 
 
 class ProducerConfig(Config):
@@ -56,7 +59,7 @@ class ProducerConfig(Config):
     # TODO: Add properties here...
 
     def __init__(self):
-        super().__init__()
+        pass
         # TODO: Add property validation here...
 
 
@@ -66,7 +69,7 @@ class ConsumerConfig(Config):
     # TODO: Add properties here...
 
     def __init__(self):
-        super().__init__()
+        pass
         # TODO: Add property validation here
 
 

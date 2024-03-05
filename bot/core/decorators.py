@@ -23,10 +23,12 @@ def run_function(func):
 
 def attach_reporter(run_function):
     """
-    Intercepts a `BusinessError` and creates an output work item for the reporter.
+    Intercepts a `BusinessError` and creates an output work item for 
+    the reporter.
 
-    If the BusinessError does not offer a `code`, it will be re-raised, since the exception
-    is not considered "catchable" by the reporter without a code.
+    If the BusinessError does not offer a `code`, it will be re-raised, 
+    since the exception is not considered "catchable" by the reporter 
+    without a code.
     """
     @functools.wraps(run_function)
     def wrapper(*args, **kwargs):
