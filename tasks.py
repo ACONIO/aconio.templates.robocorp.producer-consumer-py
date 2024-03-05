@@ -9,7 +9,7 @@ import bot.reporter
 
 from robocorp import log, workitems, tasks
 
-from bot.core import context, utils
+from bot.core import contexts, utils
 
 
 faulthandler.disable()
@@ -19,7 +19,7 @@ faulthandler.disable()
 def producer():
     """ Create output work items for the consumer. """
 
-    ctx = context.RunContextProducer(
+    ctx = contexts.RunContextProducer(
         # TODO: ADD CONFIGURATION.
     )
     with ctx:
@@ -35,7 +35,7 @@ def producer():
 def consumer():
     """ Process all the work items created by the producer. """
 
-    ctx = context.RunContextConsumer(
+    ctx = contexts.RunContextConsumer(
         # TODO: ADD CONFIGURATION.
     )
 
@@ -61,6 +61,6 @@ def consumer():
 def reporter():
     """ Reports expected failures (BREs) from the consumer to the employee. """
 
-    ctx = context.RunContextReporter(start_outlook=True)
+    ctx = contexts.RunContextReporter(start_outlook=True)
     with ctx:
         bot.reporter.run(ctx=ctx, inputs=list(workitems.inputs))

@@ -1,6 +1,6 @@
 from abc import ABC
 
-from bot.core import config
+from bot.core import configs
 
 
 class RunContextBase(ABC):
@@ -85,14 +85,14 @@ class RunContextBase(ABC):
 class RunContextProducer(RunContextBase):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.cfg = config.ProducerConfig()
+        self.cfg = configs.ProducerConfig()
 
 
 class RunContextConsumer(RunContextBase):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-        self.cfg = config.ConsumerConfig()
+        self.cfg = configs.ConsumerConfig()
 
         # init jinja2 environment holding all template files
         from jinja2 import Environment, FileSystemLoader, StrictUndefined
@@ -113,7 +113,7 @@ class RunContextConsumer(RunContextBase):
 class RunContextReporter(RunContextBase):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.cfg = config.ReporterConfig()
+        self.cfg = configs.ReporterConfig()
 
         # init jinja2 environment holding all template files
         from jinja2 import Environment, FileSystemLoader, StrictUndefined
@@ -128,4 +128,4 @@ class RunContextReporter(RunContextBase):
 class RunContextDefault(RunContextBase):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.cfg = config.Config()
+        self.cfg = configs.Config()

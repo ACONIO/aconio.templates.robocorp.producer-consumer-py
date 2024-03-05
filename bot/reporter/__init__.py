@@ -3,10 +3,11 @@ import datetime
 from robocorp import workitems
 
 from bot.core import decorators
-from bot.core import context
+from bot.core import contexts
+
 
 @decorators.run_function
-def run(ctx: context.RunContextReporter, inputs: list[workitems.Input]):
+def run(ctx: contexts.RunContextReporter, inputs: list[workitems.Input]):
     content = generate_report(
         ctx=ctx,
         items=inputs,
@@ -23,7 +24,7 @@ def run(ctx: context.RunContextReporter, inputs: list[workitems.Input]):
     )
 
 
-def generate_report(ctx: context.RunContextReporter,
+def generate_report(ctx: contexts.RunContextReporter,
                     items: list[workitems.Input],
                     salutation: str,
                     contact_person: str):
