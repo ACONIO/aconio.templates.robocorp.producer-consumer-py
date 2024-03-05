@@ -1,12 +1,11 @@
 """This file contains functions utilized by the producer."""
-import robocorp.log as log 
+from robocorp import log
 
-import bot.core.tools as tools
-import bot.core.context as ctx
+from bot.core import tools, context
 
 
 @tools.run_function
-def run(ctx: ctx.RunContextProducer) -> list[dict[str, str]]:
+def run(ctx: context.RunContextProducer) -> list[dict[str, str]]:
     """Creates a list of work item payloads."""
     work_items = []
 
