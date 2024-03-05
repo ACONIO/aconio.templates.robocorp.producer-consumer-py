@@ -126,20 +126,20 @@ This file holds a set of locators (mainly image locators) used by the `RPA.Deskt
 > See section [Update Root Robot Locators (Workaround)](#update-root-robot-locators-workaround) for a guide on how to use existing locators from subtree libraries.
 
 ### The `bot` Directory
-This directory holds the main functionality of all robot tasks. For each taks in the robot, a `.py` file should be held within this directory. For example, if the project defines a `Producer` and a `Consumer` task, the `bot directory` should hold a `producer.py` and a `consumer.py` that hold the main functionality of the tasks. If the project contains multiple consumer or producer files, a short name should be specified for the task, i.e. `consumer_<shortname>.py`.
+This directory contains the main functionality of all robot tasks. The code for each task, e.g. the consumer or producer task, is located in a seperate module.
 
-In addition to the task-specific files, the `bot` directory also offers a `common.py` file, which holds functions that are used across multiple tasks (e.g. `cleanup_robot_tmp_folder()`).
+The `bot` directory also holds an `core` module that contains all the files that offer important base-functionality for the robot, but do not directly contain the actual code of the automation (for example the robot configuration, a context manager, utils, ...).
 
-The `bot` directory also holds an `internal` folder that contains all the files that offer important base-functionality for the robot, but do not directly contain the actual code of the automation (for example the robot configuration, a context manager, utils, ...).
-
-- `internal/config.py`
+- `core/config.py`
   - Here, all configuration options of the individual tasks are held
-- `internal/context.py`
+- `core/contexts.py`
   - This file holds the context manager of the bot, which is responsible for initialization and teardown of all the libraries and applications used within the process
-- `internal/errors.py`
+- `core/errors.py`
   - The errors contained within this file can be used to represent the commonly used `Application Error` and `Business Error` in RPA automations. Such errors will be automatically handeled appropriately through the Robocorp work items library
-- `internal/tools.py`
-  - Here we keep different utils and tools that can be used across the project
+- `core/decorators.py`
+  - Useful decorators used for the robots.
+- `core/utils.py`
+  - Here we keep different utility functions that can be used across the project
 
 ### The `devdata` Directory
 Here, all files relevant for the development process are held. For more information about the `env.json` and `vault.json` see [environment variables](https://robocorp.com/docs/development-guide/variables-and-secrets/configuring-robots-using-environment-variables) and [local vault file](https://robocorp.com/docs/development-guide/variables-and-secrets/vault#local-vault-file-an-alternative-way-for-storing-local-secrets) from the official Robocorp documentation.
