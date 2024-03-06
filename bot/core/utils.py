@@ -14,10 +14,14 @@ def cleanup_folder(path: str):
         file = os.path.join(path, file_name)
         try:
             if os.path.isfile(file) or os.path.islink(file):
-                log.debug(f'removing file {file}')
+                log.debug(f"removing file {file}")
                 os.remove(file)
             elif os.path.isdir(file):
-                log.debug(f'removing directory {file}')
+                log.debug(f"removing directory {file}")
                 shutil.rmtree(file)
         except Exception as e:
-            log.warn(f'failed to delete {file}. reason: {e}')
+            log.warn(f"failed to delete {file}. reason: {e}")
+
+
+def currency_to_float(c: str) -> float:
+    return float(c.replace(".", "").replace(",", "."))
