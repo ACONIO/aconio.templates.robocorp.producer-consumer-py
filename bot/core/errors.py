@@ -2,7 +2,7 @@
 Robocorp Work Items library and the work item will be marked with the correct
 exception type."""
 
-from robocorp.workitems import ApplicationException, BusinessException
+from robocorp import workitems
 
 
 class AutomationError(Exception):
@@ -12,14 +12,18 @@ class AutomationError(Exception):
     """
 
 
-class ApplicationError(AutomationError, ApplicationException):
+class ApplicationError(
+        workitems.AutomationError,
+        workitems.ApplicationException):
     """Base class for all application errors. Application errors
     are errors that are usually transient. A work item being
     processed when such an error occurs can be retried.
     """
 
 
-class BusinessError(AutomationError, BusinessException):
+class BusinessError(
+        workitems.AutomationError,
+        workitems.BusinessException):
     """Base class for all business errors. Business errors are
     errors that are usually permanent. A work item being
     processed when such an error occurs should not be retried
