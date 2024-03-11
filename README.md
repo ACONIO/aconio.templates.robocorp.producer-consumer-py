@@ -181,6 +181,6 @@ python scripts/update_locators.py
 
 ### Linting
 
-For linting we use Visual Studio Code's [pylint extension](https://marketplace.visualstudio.com/items?itemName=ms-python.pylint) with Google's pylintrc file. Make sure to copy the `settings.json` file in your `.vscode` repository. In rare cases it is necessary to restart the linting server in vscode: `CMD+SHIFT+P > "Pylint: Restart Server" > ENTER`
+For linting we use Visual Studio Code's [pylint extension](https://marketplace.visualstudio.com/items?itemName=ms-python.pylint) with Google's pylintrc file. Make sure to copy the `settings.json` file from our [VS-Code Settings Repo](https://github.com/ACONIO/aconio.common.vscode-settings/tree/main) in your `.vscode` folder. In rare cases it is necessary to restart the linting server in vscode: `CMD+SHIFT+P > "Pylint: Restart Server" > ENTER`
 
 We try to adhere to Google's Python [styleguide](https://google.github.io/styleguide/pyguide.html).
