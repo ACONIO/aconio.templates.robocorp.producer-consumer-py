@@ -23,3 +23,4 @@ devdata/env.json
 devdata/env-testing.json
 devdata/env-consumer*.json
 devdata/env-producer*.json
+devdata/env-reporter*.json
