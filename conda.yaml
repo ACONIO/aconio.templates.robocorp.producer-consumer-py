@@ -3,17 +3,19 @@ channels:
 
 dependencies:
   - python=3.11.6
-  - pip=22.1.2
+  - pip=24.0
   - pymssql=2.2.5     # Required by: BMDDatabase.py
   - python-mss=6.1.0  # Required by: VideoRecorder.py
   - numpy=1.26.0      # Required by: VideoRecorder.py
   - opencv=4.6.0      # Required by: VideoRecorder.py
   - pip:
       - pynput==1.7.6      # Required by: VideoRecorder.py
-      - rpaframework==27.7.0
+      - rpaframework==28.4.1
       - rpaframework-recognition==5.2.3   # Required for image-automation and OCR
-      - robocorp==1.2.4                   # Required for plain python automations
-      - robocorp-browser==2.2.1           # Required for plain python browser automations
-      - robocorp-windows==0.0.1           # Required for plain python windows automations
+      - robocorp==2.0.0                   # Required for plain python automations
+      - robocorp-browser==2.3.1           # Required for plain python browser automations
+      - robocorp-windows==1.0.1           # Required for plain python windows automations
       - singleton-decorator==1.0.0        # Required for plain python automations
-      - jinja2==3.1.2                     # Template engine
+      - jinja2==3.1.3                     # Template engine
+      - azure-storage-file-share==12.15.0
+      - pydantic==2.7.0

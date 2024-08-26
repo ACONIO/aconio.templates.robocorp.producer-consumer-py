@@ -1,9 +1,14 @@
-from robocorp import log
-from robocorp.tasks import task
+"""Robot test cases."""
+
+import faulthandler
+
+from robocorp import tasks
 
 
-@task
-def generic_test():
-    """This test case can be used to test various functionality throughout the development process."""
-    log.info('Generic test successful!')
+faulthandler.disable()
+
+
+@tasks.task
+def test_generic() -> None:
+    """Template for quickly testing throughout the development process."""
     pass

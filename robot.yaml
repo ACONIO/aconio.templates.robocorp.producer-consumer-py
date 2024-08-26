@@ -7,6 +7,11 @@ tasks:
   Consumer:
     shell: python -m robocorp.tasks run tasks.py -t consumer
 
+  # rcc run -e "devdata/env-reporter.json" --task "Reporter"
+  Reporter:
+    shell: python -m robocorp.tasks run tasks.py -t reporter
+
+
 devTasks:
   # rcc run -e "devdata/env-testing.json" --dev --task "Generic Test"
   Generic Test:
@@ -28,7 +33,7 @@ PATH:
 
 PYTHONPATH:
   - .
-  - shared
+  - libs
 
 ignoreFiles:
   - .gitignore

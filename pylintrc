@@ -240,9 +240,6 @@ generated-members=
 # Maximum number of characters on a single line.
 max-line-length=80
 
-# TODO(https://github.com/pylint-dev/pylint/issues/3352): Direct pylint to exempt
-# lines made too long by directives to pytype.
-
 # Regexp for a line that is allowed to be longer than the limit.
 ignore-long-lines=(?x)(
   ^\s*(\#\ )?<?https?://\S+>?$|
@@ -267,12 +264,6 @@ indent-after-paren=4
 
 # Expected format of line ending, e.g. empty (any line ending), LF or CRLF.
 expected-line-ending-format=
-
-
-[MISCELLANEOUS]
-
-# List of note tags to take in consideration, separated by a comma.
-notes=TODO
 
 
 [STRING]
