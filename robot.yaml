@@ -2,7 +2,7 @@ tasks:
   # rcc run -e "devdata/env-producer.json" --task "Producer"
   Producer:
     shell: python -m robocorp.tasks run tasks.py -t producer
-  
+
   # rcc run -e "devdata/env-consumer.json" --task "Consumer"
   Consumer:
     shell: python -m robocorp.tasks run tasks.py -t consumer
@@ -11,12 +11,10 @@ tasks:
   Reporter:
     shell: python -m robocorp.tasks run tasks.py -t reporter
 
-
 devTasks:
   # rcc run -e "devdata/env-testing.json" --dev --task "Generic Test"
   Generic Test:
-    shell: python -m robocorp.tasks run tests.py -t generic_test
-
+    shell: python -m robocorp.tasks run tests.py -t test_generic
 
 environmentConfigs:
   - environment_windows_amd64_freeze.yaml
