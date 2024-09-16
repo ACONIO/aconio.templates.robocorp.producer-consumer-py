@@ -1,8 +1,4 @@
-"""Scripts which require the robot ht environment to run.
-
-Excepts the environment variable `RC_API_URL_V1` to be set to 
-`https://api.eu1.robocorp.com/v1/`.
-"""
+"""Scripts which require the robot ht environment to run."""
 
 import os
 import json
@@ -21,4 +17,3 @@ def generate_json_schema():
     out_path = os.path.join(tasks.get_output_dir(), "config_schema.json")
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(json.dumps(schema, indent=2))
-        
