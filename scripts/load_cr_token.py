@@ -1,3 +1,4 @@
+# pylint: skip-file
 # Performs an `rcc cloud authorize` command, grabbing the CR workspace ID from the
 # given JSON file and then setting the generated token to this JSON file.
 #

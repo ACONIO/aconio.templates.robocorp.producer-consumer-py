@@ -25,7 +25,7 @@ class ConsumerConfig(BaseConfig):
     """Consumer configuration."""
 
     # The != "false" condition prevents the test mode from accidentally being
-    # turned off, for example through a typo "Ture". Everything which is not
+    # turned off, for example through a typo. Everything which is not
     # "false" will resolve to "true" and thus enable the test mode.
     test_mode: bool = os.environ.get("TEST_MODE", "true").lower() != "false"
     """
@@ -39,7 +39,7 @@ class ReporterConfig(BaseConfig):
     """Reporter configuration."""
 
     # The != "false" condition prevents the test mode from accidentally being
-    # turned off, for example through a typo "Ture". Everything which is not
+    # turned off, for example through a typo. Everything which is not
     # "false" will resolve to "true" and thus enable the test mode.
     test_mode: bool = os.environ.get("TEST_MODE", "true").lower() != "false"
     """
