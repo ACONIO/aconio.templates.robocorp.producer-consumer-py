@@ -215,10 +215,10 @@ def reverse_readlines(file: str):
             char = file.read(1)
             if char == b"\n" or char == b"\r":
                 if line:
-                    yield line[::-1].decode("utf-8")
+                    yield line[::-1].decode("utf-8", errors="replace")
                 line = b""
             else:
                 line += char
             position -= 1
         if line:
-            yield line[::-1].decode("utf-8")
+            yield line[::-1].decode("utf-8", errors="replace")

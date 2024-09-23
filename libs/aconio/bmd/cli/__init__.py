@@ -51,9 +51,24 @@ class BMDExecutable:
         else:
             return f"/{key}"
 
-    def start(self) -> None:
-        """Start the BMD executable, which opens the BMD UI."""
-        subprocess.run(self.executable_path, check=True)
+    def start(
+        self,
+        params: dict[str, str] | None = None,
+    ) -> None:
+        """Start the BMD executable, which opens the BMD UI.
+
+        Args:
+            params:
+                Extra startup parameters. Defaults to None.
+        """
+        cmd = [self.executable_path]
+
+        if params:
+            cmd.extend(
+                [self._bmd_param(key=k, value=v) for k, v in params.items()]
+            )
+
+        subprocess.run(cmd, check=True)
 
     def run_macro(self, macro_id: str, params: dict[str, str]) -> None:
         """Execute a BMD macro via the CLI.

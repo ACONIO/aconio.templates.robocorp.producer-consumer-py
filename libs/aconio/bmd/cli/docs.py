@@ -121,7 +121,7 @@ def _documents_to_dok(
         log.info(f"Adding line to 'bmddocs.dok' import file: '{line}'")
         lines.append(line)
 
-    with open(file, "w") as f: # pylint: disable=unspecified-encoding
+    with open(file, "w") as f:
         f.write("\n".join(lines))
 
 

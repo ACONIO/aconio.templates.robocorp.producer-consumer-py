@@ -1,9 +1,20 @@
-"""Count processed work items for billing purposes."""
+"""Count processed work items for billing purposes.
 
+Usage:
+
+```python
+from aconio import counter
+
+counter.config().asset_name = "processed_items_counter"
+coutner.counter().increment()
+```
+
+"""
+
+from __future__ import annotations
 import json
 import requests
 
-from typing import List, Optional
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 
@@ -11,9 +22,25 @@ from dataclasses import dataclass
 from dataclasses_json import DataClassJsonMixin
 
 from robocorp import storage
+from functools import lru_cache
+
+from aconio.counter import _config
+
+@lru_cache
+def config() -> _config.Config:
+    return _config.Config()
 
 
-class ItemCounter:
+@lru_cache
+def counter() -> _ItemCounter:
+    if config().asset_name is None:
+        raise RuntimeError(
+            "Asset name not set. Please set 'config().asset_name' first."
+        )
+    return _ItemCounter(config().asset_name)
+
+
+class _ItemCounter:
     """Count processed work items for billing purposes.
 
     A wrapper class for a Robocorp Control Room asset, used to count processed
@@ -76,10 +103,10 @@ class ItemCounter:
         the end date of the latest billing period, a new period will be created
         as well.
         """
-        counter = _Counter.from_dict(storage.get_json(self._asset_name))
-        counter.increment()
+        curr_counter = _Counter.from_dict(storage.get_json(self._asset_name))
+        curr_counter.increment()
 
-        storage.set_json(self._asset_name, counter.to_dict())
+        storage.set_json(self._asset_name, curr_counter.to_dict())
 
 
 @dataclass
@@ -91,8 +118,8 @@ class _Period(DataClassJsonMixin):
     count: int
 
     # Notifications
-    counter_exceeded_msg_sent: Optional[bool] = False
-    period_ending_msg_sent: Optional[bool] = False
+    counter_exceeded_msg_sent: bool | None = False
+    period_ending_msg_sent: bool | None = False
 
     def increment(self):
         """Increment the counter by 1."""
@@ -119,11 +146,11 @@ class _Counter(DataClassJsonMixin):
     process_name: str
     client_name: str
     max_counter: int
-    periods: List[_Period]
+    periods: list[_Period]
 
     # Notifications
-    notification_endpoint: Optional[str] = ""
-    period_ending_msg_weeks: Optional[int] = 3
+    notification_endpoint: str | None = ""
+    period_ending_msg_weeks: int | None = 3
 
     def increment(self):
         """
@@ -143,9 +170,9 @@ class _Counter(DataClassJsonMixin):
             If the counter of the updated period exceeds `max_counter`,
             a notification will be sent to the `notification_endpoint`
         """
-        curr_period = self.__get_curr_period(self.periods)
+        curr_period = self._get_curr_period(self.periods)
         if curr_period is None:
-            curr_period = self.__create_period()
+            curr_period = self._create_period()
             self.periods.append(curr_period.increment())
         else:
             curr_period.increment()
@@ -154,17 +181,17 @@ class _Counter(DataClassJsonMixin):
             curr_period.count > self.max_counter
             and not curr_period.counter_exceeded_msg_sent
         ):
-            self.__send_notification(curr_period, "MAX_COUNTER_EXCEEDED")
+            self._send_notification(curr_period, "MAX_COUNTER_EXCEEDED")
             curr_period.counter_exceeded_msg_sent = True
 
         if (
-            self.__period_is_ending(curr_period)
+            self._period_is_ending(curr_period)
             and not curr_period.period_ending_msg_sent
         ):
-            self.__send_notification(curr_period, "PERIOD_ABOUT_TO_END")
+            self._send_notification(curr_period, "PERIOD_ABOUT_TO_END")
             curr_period.period_ending_msg_sent = True
 
-    def __create_period(self, today: date = date.today()) -> _Period:
+    def _create_period(self, today: date = date.today()) -> _Period:
         """Create a new period based on the given date (default = today)."""
         return _Period(
             start_date=today.strftime("%d.%m.%Y"),
@@ -172,11 +199,11 @@ class _Counter(DataClassJsonMixin):
             count=0,
         )
 
-    def __get_curr_period(self, periods: List[_Period]) -> _Period:
+    def _get_curr_period(self, periods: list[_Period]) -> _Period:
         """Return the index of the current period from a list of periods."""
         return next((p for p in periods if p.is_current()), None)
 
-    def __period_is_ending(self, period: _Period) -> bool:
+    def _period_is_ending(self, period: _Period) -> bool:
         """Checks if the period ends in the amount of weeks given in
         `period_ending_msg_weeks`.
         """
@@ -184,7 +211,7 @@ class _Counter(DataClassJsonMixin):
             period.end - date.today()
         ).days < self.period_ending_msg_weeks * 7
 
-    def __send_notification(self, period: _Period, msg: str):
+    def _send_notification(self, period: _Period, msg: str):
         """Sends a POST request to the given notification endpoint."""
         response = requests.post(
             self.notification_endpoint,

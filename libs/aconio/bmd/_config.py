@@ -73,7 +73,7 @@ def _get_log_dir() -> str:
 
 @dataclasses.dataclass
 class Config:
-    """Global configurations available in `aconio.bmd.cli`."""
+    """Global configurations available in `aconio.bmd`."""
 
     temp_path: str | None = None
     """
@@ -82,6 +82,9 @@ class Config:
 
     ntcs_dir: str = os.environ.get("BMDNTCSDIR")
     """Path the the BMDNTCS and BMDExec executables."""
+
+    ntcs_window_locator: str = 'subname:"BMD - Software"'
+    """The `robocorp.windows` locator to identify the main BMD window."""
 
     _log_dir: str | None = None
     """

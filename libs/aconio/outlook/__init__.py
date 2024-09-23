@@ -8,9 +8,9 @@ The following features extend or improve the existing functionality of the
     errors in multi-user server environments.
 - An improved `send_email` function with additional options, such as specifying
     the sender account, or storing the e-mail as a draft.
-- A `save_email` function for identifying certain e-mails within Outlook and
-    storing them on the filesystem as `.msg` files.
-
+- A `save_email` function for storing e-mails on the filesystem as `.msg` 
+    files.
+- A `filter_emails` function for identifying certain e-mails within Outlook.
     
 ## Usage
 
@@ -54,10 +54,15 @@ mail_filter = (
     f"And [Subject] = '{mail_subject}'"
 )
 
-# Identify the recently sent e-mail and save it
-outlook.save_email(
+# Identify the recently sent e-mail
+mails = outlook.filter_emails(
     folder_name="Gesendete Elemente",
     email_filter=mail_filter,
+)
+
+# Save the e-mail to disk
+outlook.save_email(
+    mail=mails[1], # Note: Outlook array indices start at 1
     output_file_path="my_email.msg",
 )
 ```
@@ -88,12 +93,13 @@ import time
 import functools
 import faulthandler
 
-from aconio.core import utils
-
+from typing import Any
 from robocorp import windows
 
 from RPA.application import COMError
 from RPA.Outlook.Application import Application as OutlookApp
+
+from aconio.core import utils
 
 faulthandler.disable()  # Disable robocorp.windows thread warning dumps
 
@@ -245,28 +251,83 @@ def send_email(
 
 
 def save_email(
+    mail: Any,
+    output_file_path: str,
+) -> None:
+    """Save an Outlook `MailItem` object to disk.
+
+    Args:
+        mail:
+            `MailItem` to be saved.
+        output_file_path:
+            Path to the resulting `.msg` file. Can end with '.msg', otherwise
+            it will automatically be appended.
+
+    Raises:
+        ValueError:
+            If `mail` is not of type `MailItem`.
+    """
+
+    if type(mail).__name__ != "_MailItem":
+        raise ValueError("Parameter `mail` must be a valid Outlook `MailItem`.")
+
+    if not output_file_path.endswith(".msg"):
+        output_file_path = output_file_path + ".msg"
+
+    mail.SaveAs(os.path.abspath(output_file_path))
+
+
+def delete_email(mail: Any) -> None:
+    """Delete an Outlook `MailItem`.
+
+    Note that this only moves the e-mail to the "Gelöschte Elemente" folder.
+
+    Args:
+        mail:
+            `MailItem` to be deleted.
+
+    Raises:
+        ValueError:
+            If `mail` is not of type `MailItem`.
+    """
+
+    if type(mail).__name__ != "_MailItem":
+        raise ValueError("Parameter `mail` must be a valid Outlook `MailItem`.")
+
+    mail.Delete()
+
+
+def filter_emails(
     folder_name: str,
     email_filter: str,
-    output_file_path: str,
     account_name: str = None,
-) -> None:
-    """Find an e-mail in Outlook and save it to the file system.
+    sort: tuple[str, bool] = None,
+) -> list[Any]:
+    """Find specific e-mails in an Outlook folder.
 
     Args:
         folder_name:
             Name of the Outlook folder to search.
         email_filter:
             Outlook filter applied to find the desired E-Mail.
-        output_file_path:
-            Path to the resulting `.msg` file. Can end with '.msg', otherwise
-            it will automatically be appended.
         account_name:
             Name of the Outlook account that holds the e-mail. Not required if
             the desired account is the currently configured default account.
+        sort:
+            Tuple of (`str`, `bool`), where the first item must be an Outlook
+            `MailItem` property (including brackets, e.g. '[SentOn]') and the
+            second item determines the sorting order. If `True`, results will
+            be sorted in descending order, otherwise ascending.
+            For example: `("[SentOn]", True)` for retrieving the most recently
+            sent `MailItem` first.
+
+    Returns:
+        list[Any]:
+            List of Outlook mail items.
 
     Raises:
-        RuntimeError: If a single e-mail could not be identified using the
-        given filter (i.e. multiple matches or no match).
+        AttributeError:
+            If the given `email_filter` is invalid.
     """
     # pylint: disable=protected-access
     folder = _outlook()._get_folder(account_name, folder_name)
@@ -277,16 +338,13 @@ def save_email(
     except Exception as exc:  # pylint: disable=broad-except
         raise AttributeError(f"Invalid filter '{email_filter}'") from exc
 
-    if len(mails) == 0:
-        raise RuntimeError("No e-mail matches given filter.")
-    elif len(mails) > 1:
-        raise RuntimeError("Multiple e-mails match given filter.")
-    else:
-        if not output_file_path.endswith(".msg"):
-            output_file_path = output_file_path + ".msg"
+    if not mails:
+        return []
 
-        # Outlook item array indices start at 1
-        mails[1].SaveAs(os.path.abspath(output_file_path))
+    if sort:
+        mails.Sort(sort[0], sort[1])
+
+    return mails
 
 
 def is_open():
