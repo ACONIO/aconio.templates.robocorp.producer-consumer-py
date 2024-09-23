@@ -26,4 +26,4 @@ def teardown() -> None:
 @decorators.run_function
 def run(item: _items.Item):
     """Processes a single work item."""
-    pass
+    print(item)

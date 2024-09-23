@@ -1,0 +1,15 @@
+matrix:
+  - name: python source
+    aspell:
+      lang: en
+      d: en_US
+      ignore-case: true
+    dictionary:
+      wordlists:
+        - .github/custom.wordlist.txt
+        - .github/de.wordlist.txt
+    pipeline:
+      - pyspelling.filters.python:
+          strings: false
+    sources:
+      - bot/**/*.py
