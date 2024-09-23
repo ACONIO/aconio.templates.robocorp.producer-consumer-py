@@ -124,14 +124,11 @@ def login(
         ):
             time_popup.find('name:"Abbrechen"').click()
 
-        if (
-            sync_popup := dvo_window()
-            .find(
-                'subname:"Eine Synchronisation"', timeout=5, raise_error=False
-            )
-            .get_parent()
-        ):
-            sync_popup.find('name:"OK" and class:Button').click()
+        sync_popup = dvo_window().find(
+            'subname:"Eine Synchronisation"', timeout=5, raise_error=False
+        )
+        if sync_popup:
+            sync_popup.get_parent().find('name:"OK" and class:Button').click()
 
     # Handle release notes
     if release_notes := dvo_window().find(

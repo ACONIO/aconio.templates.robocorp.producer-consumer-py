@@ -86,7 +86,6 @@ def to_german_currency_string(number: float, show_currency_symbol: bool) -> str:
     except locale.Error:
         locale.setlocale(locale.LC_MONETARY, "German_Austria.1252")
 
-    locale.setlocale(locale.LC_MONETARY, "de_DE.UTF-8")
     return locale.currency(number, symbol=show_currency_symbol, grouping=True)
 
 

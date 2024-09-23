@@ -13,7 +13,7 @@ class BMDError(Exception):
 
 def bmd_window(**kwargs) -> windows.WindowElement:
     """Return the main BMD window."""
-    return windows.find_window('subname:"BMD - Software"', **kwargs)
+    return windows.find_window(config().ntcs_window_locator, **kwargs)
 
 
 def close_tab() -> None:
@@ -24,6 +24,7 @@ def close_tab() -> None:
 
 def open_application(
     ntcs_exec_type: ExecutableType | str | None = None,
+    params: dict[str, str] | None = None,
 ) -> None:
     """Open the BMD application.
 
@@ -32,6 +33,9 @@ def open_application(
             NTCS executable type. Can either be "NTCS" or "EXEC". If unset,
             the exec type of the module config (`config().ntcs_exec_type`)
             will be used.
+        params:
+            Extra startup parameters passed to the CLI command to start BMD.
+            Defaults to `None`.
     """
 
     executable = ntcs_cli.BMDExecutable(
@@ -39,7 +43,7 @@ def open_application(
     )
 
     log.info(f"Starting BMD executable at {executable.executable_path}")
-    executable.start()
+    executable.start(params=params)
 
     try:
         # Starting the BMD window can take up to 50 seconds (default timeout
