@@ -121,6 +121,7 @@ def _documents_to_dok(
         log.info(f"Adding line to 'bmddocs.dok' import file: '{line}'")
         lines.append(line)
 
+    # pylint: disable=unspecified-encoding
     with open(file, "w") as f:
         f.write("\n".join(lines))
 
@@ -137,7 +138,7 @@ def open_dms_document(doc_id: str, archive_id: str) -> None:
         archive_id:
             ID of the DMS archive to which the document belongs.
     """
-    ntcs_cli().run(
+    ntcs_cli().run_function(
         function_name="MCS_OPEN_DOCUMENT",
         params={"DOK_ARCHIVNR": archive_id, "DOK_DOKUMENTENNR": doc_id},
     )
@@ -161,7 +162,7 @@ def import_bmddocs(
 
     _documents_to_dok(docs=docs, file=import_file, optional=optional)
 
-    ntcs_cli().run(
+    ntcs_cli().run_function(
         function_name="MCS_MDDOKUMENTMGR_IMPORTNEWDOCS",
         params={"FILE": import_file},
     )
@@ -170,6 +171,6 @@ def import_bmddocs(
     # function execution was successful. If the pop-up cannot be found, it
     # indicates that something went wrong with the executed function.
     if config().ntcs_exec_type == ExecutableType.EXEC:
-        bmd.bmd_window().find('name:"Achtung" class:TBMDMessageBoxFRM').find(
+        bmd.window().find('name:"Achtung" class:TBMDMessageBoxFRM').find(
             'name:"Ok" class:TButton'
         ).click()

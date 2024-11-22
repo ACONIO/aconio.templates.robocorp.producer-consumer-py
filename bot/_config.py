@@ -5,55 +5,54 @@ import sys
 import yaml
 import pydantic
 
+import functools
 
-class BaseConfig(pydantic.BaseModel):
-    """Shared configuration."""
+from aconio.core import errors
 
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+_config_path = None
 
+
+class CustomBase(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(
+        extra="forbid", use_enum_values=True, arbitrary_types_allowed=True
+    )
+    model_config = pydantic.ConfigDict(coerce_numbers_to_str=True)
+
+
+class Config(CustomBase):
+    """Process Configurations"""
+
+    # TODO Create config
     pass
 
 
-class ProducerConfig(BaseConfig):
-    """Producer configuration."""
+def set_config_path(path: str) -> None:
+    """Set the path to the configuration file.
 
-    max_work_items: int | None = os.environ.get("MAX_WORK_ITEMS")
-    """Maximum amount of work items created by the Producer."""
-
-
-class ConsumerConfig(BaseConfig):
-    """Consumer configuration."""
-
-    # The != "false" condition prevents the test mode from accidentally being
-    # turned off, for example through a typo. Everything which is not
-    # "false" will resolve to "true" and thus enable the test mode.
-    test_mode: bool = os.environ.get("TEST_MODE", "true").lower() != "false"
+    Args:
+        path:
+            The path to the `.yaml` configuration file.
     """
-    If enabled, the bot does not perform any "critical" actions, such as
-    sending e-mails, or inserting data in applications.
-    Per default, test mode is enabled.
-    """
+    globals()["_config_path"] = path
 
 
-class ReporterConfig(BaseConfig):
-    """Reporter configuration."""
-
-    # The != "false" condition prevents the test mode from accidentally being
-    # turned off, for example through a typo. Everything which is not
-    # "false" will resolve to "true" and thus enable the test mode.
-    test_mode: bool = os.environ.get("TEST_MODE", "true").lower() != "false"
-    """
-    If enabled, report e-mail will only be stored as draft.
-    Per default, test mode is enabled.
-    """
-
-    recipients: str = os.environ.get("RECIPIENT")
-    """E-Mail or list of semicolon-separated e-mails of report recipients."""
-
-    contact: str = os.environ.get("CONTACT")
-    """Contact person at Aconio."""
+@functools.lru_cache
+def config() -> Config:
+    with open(_config_path, encoding="UTF-8") as stream:
+        try:
+            data = yaml.safe_load(stream)
+            return Config(**data)
+        except yaml.YAMLError as exc:
+            raise errors.ApplicationError(
+                "Failed to load YAML config!"
+            ) from exc
 
 
-def dump(config: BaseConfig) -> None:
+def dump() -> None:
     """Print the configuration."""
-    yaml.dump(config.model_dump(exclude_unset=True), sys.stdout)
+    yaml.dump(config().model_dump(exclude_unset=True), sys.stdout)
+
+
+def env() -> str:
+    """Return the execution environment ("dev" | "test" | "prod")."""
+    return os.environ.get("ENVIRONMENT").lower()

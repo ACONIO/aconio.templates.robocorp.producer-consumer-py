@@ -1,4 +1,4 @@
-"""A wrapper for Robocorp's `RPA.Outlook.Application` library.
+"""Wrapper library for Robocorp's `RPA.Outlook.Application`.
 
 ## Features
 The following features extend or improve the existing functionality of the
@@ -104,7 +104,7 @@ from aconio.core import utils
 faulthandler.disable()  # Disable robocorp.windows thread warning dumps
 
 
-@functools.lru_cache  # Always return the same instance.
+@functools.lru_cache
 def _outlook() -> OutlookApp:
     return OutlookApp()
 

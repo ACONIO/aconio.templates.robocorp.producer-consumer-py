@@ -11,18 +11,19 @@ Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Classifier: Programming Language :: Python :: 3.11
 Requires-Python: >=3.11
 Description-Content-Type: text/markdown
-Requires-Dist: robocorp >=2.0.0
-Requires-Dist: robocorp-windows >=1.0.3
-Requires-Dist: jinja2 >=3.1.3
-Requires-Dist: mss >=6.1.0
-Requires-Dist: numpy >=1.26.0
-Requires-Dist: opencv-python >=4.6.0
-Requires-Dist: pynput >=1.7.6
-Requires-Dist: pymssql >=2.2.5
-Requires-Dist: azure-storage-file-share >=12.15.0
-Requires-Dist: rpaframework >=28.5.1
-Requires-Dist: requests >=2.32.2
-Requires-Dist: pydantic >=2.7.0
+Requires-Dist: robocorp>=2.0.0
+Requires-Dist: robocorp-browser>=2.3.1
+Requires-Dist: robocorp-windows>=1.0.3
+Requires-Dist: jinja2>=3.1.3
+Requires-Dist: mss>=6.1.0
+Requires-Dist: numpy>=1.26.0
+Requires-Dist: opencv-python>=4.6.0
+Requires-Dist: pynput>=1.7.6
+Requires-Dist: pymssql>=2.2.5
+Requires-Dist: azure-storage-file-share>=12.15.0
+Requires-Dist: rpaframework>=28.5.1
+Requires-Dist: requests>=2.32.2
+Requires-Dist: pydantic>=2.7.0
 
 # Elevate your 🐍 Python Automations with the `aconio` Automation Framework 🛠️
 
@@ -104,5 +105,5 @@ python -m robocorp.tasks run tests/<module>/tests.py
 
 To only run a specific task within a `tests.py` file, specify the task with the `-t` parameter:
 ```bash
-python -m robocorp.tasks run tests/outlook/tests.py -t test_send_email
+RC_VAULT_SECRET_MANAGER="FileSecrets" RC_VAULT_SECRET_FILE="./secrets.json" python -m robocorp.tasks run tests/dao/tests_client.py -t test_get_client_contact_person
 ```
