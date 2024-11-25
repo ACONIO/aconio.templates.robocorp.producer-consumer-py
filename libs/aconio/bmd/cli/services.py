@@ -177,7 +177,7 @@ def import_services(services: list[BMDService]) -> None:
     import_file = _utils.create_import_file("import_services.csv")
     _services_to_csv(services, import_file)
 
-    ntcs_cli().run(
+    ntcs_cli().run_function(
         function_name="MCS_BATCH_IMPORT_CSV",
         params={
             "STP_IMP_FILENAME": import_file,

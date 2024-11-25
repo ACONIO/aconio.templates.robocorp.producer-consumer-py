@@ -49,13 +49,13 @@ def configure(teilnehmer_id: str, benutzer_id: str, pin: str) -> None:
 
     Args:
         teilnehmer_id:
-            'Teilnehmer-ID' part of the FinanzOnline login credentials.
+            "Teilnehmer-ID" part of the FinanzOnline login credentials.
 
         benutzer_id:
-            'Benutzer-ID' part of the FinanzOnline login credentials.
+            "Benutzer-ID" part of the FinanzOnline login credentials.
 
         pin:
-            'PIN' part of the FinanzOnline login credentials.
+            "PIN" part of the FinanzOnline login credentials.
     """
     config().teilnehmer_id = teilnehmer_id
     config().benutzer_id = benutzer_id
@@ -71,7 +71,7 @@ def download_steuerkonto_pdf(
     vorauszahlungen: bool = False,
     rueckstandsaufgliederung: bool = False,
 ) -> None:
-    """Return the FinanzOnline 'Steuerkonto' as PDF.
+    """Return the FinanzOnline "Steuerkonto" as PDF.
 
     Args:
         steuernummer:
@@ -81,19 +81,19 @@ def download_steuerkonto_pdf(
             Download location for the PDF file.
 
         anmerkungen:
-            Include 'Anmerkungen' section in the PDF.
+            Include "Anmerkungen" section in the PDF.
 
         rueckzahlungen:
-            Include 'Rückzahlungen' section in the PDF.
+            Include "Rückzahlungen" section in the PDF.
 
         zahlungsplan:
-            Include 'Zahlungsplan' section in the PDF.
+            Include "Zahlungsplan" section in the PDF.
 
         vorauszahlungen:
-            Include 'Vorauszahlungen/Veranlagungen' section in the PDF.
+            Include "Vorauszahlungen/Veranlagungen" section in the PDF.
 
         rueckstandsaufgliederung:
-            Include 'Rückstandsaufgliederung' section in the PDF.
+            Include "Rückstandsaufgliederung" section in the PDF.
     """
 
     auth = _login()
@@ -101,12 +101,10 @@ def download_steuerkonto_pdf(
 
     acc_url = f"{config().base_url}/fon/p/konto.do"
 
-    # Go to 'Steuerkonto' page after login was handled in the background
-    # and set tax ID.
     page.goto(f"{acc_url}?reqkey={auth.request_key}")
     page.locator('//input[@id="suchob"]').fill(steuernummer)
 
-    # Select the checkboxes according to the given params
+    # Select the query result checkboxes according to the given params
     if rueckzahlungen:
         page.locator('//input[@name="sabfrrz"]').check()
     if anmerkungen:
@@ -158,23 +156,23 @@ class TaxAccount:
 def query_steuerkonto(
     steuernummer: str, datum_ab: str = None, datum_bis: str = None
 ) -> TaxAccount:
-    """Queries information of the FinanzOnline 'Steuerkonto'.
+    """Queries information of the FinanzOnline "Steuerkonto".
 
     Args:
         steuernummer:
             Client tax number for which the query should be performed.
 
         datum_ab:
-            Begin date of the 'Steuerkonto' query (in format 'DDMMYYYY').
+            Begin date of the "Steuerkonto" query (in format 'DDMMYYYY').
 
         datum_bis:
-            End date of the 'Steuerkonto' query (in format 'DDMMYYYY').
+            End date of the "Steuerkonto" query (in format 'DDMMYYYY').
 
     Raises:
-        RuntimeError: Raised if 'Steuerkonto' request fails.
+        RuntimeError: Raised if "Steuerkonto" request fails.
 
     Returns:
-        `TaxAccount` object filled with 'Steuerkonto' data.
+        `TaxAccount` object filled with "Steuerkonto" data.
     """
 
     # Authenticate against FinanzOnline
@@ -183,18 +181,17 @@ def query_steuerkonto(
     acc_url = f"{config().base_url}/fon/p/konto.do"
 
     form_data = {
-        # 'Steuernummer' for which the query should be executed:
         "suchob": steuernummer,
-        "sabfrzp5": "true",  # enable 'Zahlungsplan'
-        "sabfrrz": "true",  # enable 'Rückzahlungen'
+        "sabfrzp5": "true",  # enable "Zahlungsplan"
+        "sabfrrz": "true",  # enable "Rückzahlungen"
         "_csrf": _get_csrf_token(acc_url, auth),
     }
 
-    # Add 'Zeitraum ab' parameter to query
+    # Add "Zeitraum ab" parameter to query
     if datum_ab is not None:
         form_data["sabfrbubta"] = datum_ab
 
-    # Add 'Zeitraum bis' parameter to query
+    # Add "Zeitraum bis" parameter to query
     if datum_bis is not None:
         form_data["sabfrbubtb"] = datum_bis
 
@@ -208,17 +205,11 @@ def query_steuerkonto(
 
     if response.status_code == 200:
 
+        # "Steuerkonto" query errors can still be displayed, despite
+        #  the status code from the POST request being 200
+        _detect_steuerkonto_query_error(response.text)
+
         account = _get_steuerkonto(response.text)
-
-        # Check if an error occured when the query was performed.
-        # e.g. wrong tax-ID will still result in a 200 status code
-        # but display an error msg.
-        soup = BeautifulSoup(response.text, "html.parser")
-        error_msg = soup.find("ul", attrs={"id": "fehlerAufgetretenListe"})
-
-        if error_msg is not None:
-            err = error_msg.text[2::]  # Remove List sign
-            raise RuntimeError(err)
 
         # Get the "Buchungen" table
         account.buchungen = _read_steuerkonto_table(
@@ -240,7 +231,7 @@ def query_steuerkonto(
         return account
     else:
         raise RuntimeError(
-            f"Failed to query 'Steuerkonto' for ID '{steuernummer}'"
+            f'Failed to query "Steuerkonto" for ID "{steuernummer}"'
         )
 
 
@@ -253,13 +244,13 @@ def _login() -> _config.Authentication:
     """
 
     if config().teilnehmer_id is None:
-        raise ValueError("Missing 'Teilnehmer-ID' in the configuration.")
+        raise ValueError('Missing "Teilnehmer-ID" in the configuration.')
 
     if config().benutzer_id is None:
-        raise ValueError("Missing 'Benutzer-ID' in the configuration.")
+        raise ValueError('Missing "Benutzer-ID" in the configuration.')
 
     if config().pin is None:
-        raise ValueError("Missing 'PIN' in the configuration.")
+        raise ValueError('Missing "PIN" in the configuration.')
 
     form_data = {
         "tid": config().teilnehmer_id,
@@ -274,7 +265,7 @@ def _login() -> _config.Authentication:
 
     # Check the response status code
     if response.status_code == 200:
-        # If a 'Personifizierung' is required, handle it and re-authenticate
+        # If a "Personifizierung" is required, handle it and re-authenticate
         if _handle_personification(response.text, cookies=cookies):
             response = requests.post(url=login_url, data=form_data, timeout=10)
             cookies = response.cookies
@@ -292,9 +283,9 @@ def _handle_personification(
 ) -> bool:
     """Handle personification popup.
 
-    Check if the 'Personifizierung' pop-up is in the given HTML (which should be
+    Check if the "Personifizierung" pop-up is in the given HTML (which should be
     the FinanzOnline page after login). If no pop-up is found, return `False`.
-    If a 'Personifizierung' pop-up is found, handle it and return `True`.
+    If a "Personifizierung" pop-up is found, handle it and return `True`.
 
     Args:
         html (str): HTML of the page after a FinanzOnline login
@@ -303,7 +294,6 @@ def _handle_personification(
     # Parse the given HTML page
     soup = BeautifulSoup(html, "html.parser")
 
-    # Try to find the 'Personifizierung' pop-up
     personification_radio_btns = soup.find(
         "label", text="Ich möchte die Personifizierung sofort durchführen."
     )
@@ -375,12 +365,88 @@ def _get_csrf_token(url: str, auth: _config.Authentication) -> str:
     return csrf
 
 
+def _detect_steuerkonto_query_error(html: str) -> None:
+    """Check if a "Steuerkonto" query error is present in the given HTML.
+
+    Args:
+        html: HTML of the "FinanzOnline Steuerkonto".
+
+    Raises:
+        RuntimeError:
+            If a "Steuerkonto" query error is detected in the given HTML. The
+            error message will be equivalent to the error message in the HTML.
+    """
+
+    soup = BeautifulSoup(html, "html.parser")
+    error_msg = soup.find("ul", attrs={"id": "fehlerAufgetretenListe"})
+
+    if error_msg is not None:
+        err = error_msg.text[2::]  # Remove List sign
+        raise RuntimeError(err)
+
+
+def _get_steuerkonto(html: str) -> TaxAccount:
+    """Extract metadata from the FinanzOnline "Steuerkonto".
+
+    Particularly, the "Endsaldo Stand", "Endsaldo", "Steuernummer"
+    and "Finanzamtnummer". If any of those values are not extractable,
+    they will be set to `None`.
+
+    Args:
+        html: HTML of the "FinanzOnline Steuerkonto".
+
+    Returns:
+        `TaxAccount` object.
+    """
+
+    account = TaxAccount()
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Check if "Buchungen" section shows "keine Daten vorhanden"
+    # If this is the case, the "Endsaldo" values won't be extractable
+    no_data_text = soup.find(
+        "div", attrs={"aria-label": re.compile(r".*Buchungen (vom|bis).*")}
+    ).find("div", text=re.compile(r".*Keine entsprechenden Daten vorhanden*"))
+    if no_data_text is not None:
+        account.endsaldo_stand = None
+        account.endsaldo = None
+    else:
+        # Get the "Endsaldo" table
+        endsaldo_table = soup.find_all("table", attrs={"class": "table"})[2]
+
+        # Extract the "Endsaldo Stand" date
+        account.endsaldo_stand = endsaldo_table.find_all("td")[0].text.strip()
+
+        # Extract the "Endsaldo" value
+        account.endsaldo = endsaldo_table.find_all("td")[1].text.strip()
+
+    # Extract the "Steuernummer" value
+    steuernummer = (
+        soup.find("div", text=re.compile(r".*Steuernummer.*"))
+        .find_next_sibling("div")
+        .text.strip()
+    )
+
+    account.steuernummer = steuernummer
+
+    # Extract the "Finanzamt" number
+    finanzamt_div = soup.find("div", text=re.compile(r".*Finanzamt.*"))
+    finanzamt_text = finanzamt_div.find_next_sibling("div").text.strip()
+
+    match = re.search(r"\((\d+)\)", finanzamt_text)
+    if match:
+        account.finanzamt_number = match.group(1)
+
+    return account
+
+
 def _read_steuerkonto_table(html: str, region_label: str) -> list[dict] | None:
-    """Read HTML table of the 'Steuerkonto'.
+    """Read HTML table of the "Steuerkonto".
 
     Args:
         html:
-            HTML of the 'FinanzOnline Steuerkonto' page.
+            HTML of the FinanzOnline "Steuerkonto" page.
 
         region_label:
             The `aria-label` value of the section `div` (can be regex pattern)
@@ -427,59 +493,3 @@ def _read_steuerkonto_table(html: str, region_label: str) -> list[dict] | None:
             extracted_data.append(data)
 
     return extracted_data
-
-
-def _get_steuerkonto(html: str) -> TaxAccount:
-    """Extract metadata from the FinanzOnline 'Steuerkonto'.
-
-    Particularly, the 'Endsaldo Stand', 'Endsaldo', 'Steuernummer'
-    and 'Finanzamtnummer'. If any of those values are not extractable,
-    they will be set to `None`.
-
-    Args:
-        steuerkonto_html: HTML of the 'FinanzOnline Steuerkonto'.
-
-    Returns:
-        `TaxAccount` object.
-    """
-
-    account = TaxAccount()
-
-    soup = BeautifulSoup(html, "html.parser")
-
-    # Check if 'Buchungen' section shows "keine Daten vorhanden"
-    # If this is the case, the 'Endsaldo' values won't be extractable
-    no_data_text = soup.find(
-        "div", attrs={"aria-label": re.compile(r".*Buchungen (vom|bis).*")}
-    ).find("div", text=re.compile(r".*Keine entsprechenden Daten vorhanden*"))
-    if no_data_text is not None:
-        account.endsaldo_stand = None
-        account.endsaldo = None
-    else:
-        # Get the 'Endsaldo' table
-        endsaldo_table = soup.find_all("table", attrs={"class": "table"})[2]
-
-        # Extract the "Endsaldo Stand" date
-        account.endsaldo_stand = endsaldo_table.find_all("td")[0].text.strip()
-
-        # Extract the "Endsaldo" value
-        account.endsaldo = endsaldo_table.find_all("td")[1].text.strip()
-
-    # Extract the "Steuernummer" value
-    steuernummer = (
-        soup.find("div", text=re.compile(r".*Steuernummer.*"))
-        .find_next_sibling("div")
-        .text.strip()
-    )
-
-    account.steuernummer = steuernummer
-
-    # Extract the "Finanzamt" number
-    finanzamt_div = soup.find("div", text=re.compile(r".*Finanzamt.*"))
-    finanzamt_text = finanzamt_div.find_next_sibling("div").text.strip()
-
-    match = re.search(r"\((\d+)\)", finanzamt_text)
-    if match:
-        account.finanzamt_number = match.group(1)
-
-    return account
