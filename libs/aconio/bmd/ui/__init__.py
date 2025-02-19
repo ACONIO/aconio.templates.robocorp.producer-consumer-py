@@ -2,7 +2,7 @@
 
 from robocorp import windows, log
 
-from aconio.core import utils
+from aconio.utils import utils
 from aconio.bmd import cli, _errors
 from aconio.bmd._config import config
 
@@ -91,19 +91,19 @@ def _wait_for_bmd_window() -> None:
             seconds, or 500 seconds in case a BMD update is performed.
     """
 
-    max_wait_seconds = 60
+    # Max time to wait for the BMD window to appear.
+    timeout = 60
 
     if _find_update_notification():
         log.warn("BMD update notification detected.")
-        max_wait_seconds = 600
+        timeout = 600
 
-    retries = 10
-    wait_between_retries = max_wait_seconds / retries
+    # Provided that the default timeout of robocorp.windows is 10
+    # seconds, we can calculate the number of retries needed.
+    retries = timeout // 10
 
     try:
-        utils.wait_until_succeeds(
-            retries, wait_between_retries, _find_bmd_window
-        )
+        utils.wait_until_succeeds(retries, 0, _find_bmd_window)
     except windows.ElementNotFound:
         # pylint: disable-next=raise-missing-from
         raise _errors.BMDError(
@@ -122,17 +122,16 @@ def _find_update_notification() -> windows.WindowElement | None:
 
 def _find_bmd_window() -> None:
     """Raise if the BMD window is not found."""
-    # Within this function and `_catch_version_dialog`, we purposefully
-    # set the robocorp.windows timeout to 0 seconds to ensure that the
-    # wait times defined in `_wait_for_bmd_window` are depicted correctly.
-    _catch_version_dialog()
-    window(timeout=0)
+    # Here, we purposefully set the timeout to 0 seconds to ensure that the
+    # check for a version dialog does not cost too much time.
+    _catch_version_dialog(timeout=0)
+    window()
 
 
-def _catch_version_dialog() -> None:
+def _catch_version_dialog(timeout: int = 10) -> None:
     """Catch the BMD version dialog and close it if it appears."""
     version_dialog = windows.desktop().find(
-        'subname:"Neue Version gefunden"', raise_error=False, timeout=0
+        'subname:"Neue Version gefunden"', raise_error=False, timeout=timeout
     )
 
     if version_dialog:

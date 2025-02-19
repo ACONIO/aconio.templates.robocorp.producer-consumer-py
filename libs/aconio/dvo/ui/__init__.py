@@ -3,14 +3,20 @@
 import os
 import time
 import functools
+import subprocess
 import faulthandler
 
-from robocorp import windows, log
-from pynput_robocorp import keyboard
+import RPA.Desktop
+import robocorp.log as log
+import robocorp.windows as windows
+import pynput_robocorp.keyboard as keyboard
 
-from RPA.Desktop import Desktop
+import aconio.dvo.ui._locators as dvo_locators
+import aconio.dvo.errors as errors
 
-from aconio.dvo.ui._locators import locators
+# Typedefs
+Desktop = RPA.Desktop.Desktop
+locators = dvo_locators.locators
 
 faulthandler.disable()
 
@@ -18,10 +24,6 @@ faulthandler.disable()
 @functools.lru_cache
 def _desktop() -> Desktop:
     return Desktop()
-
-
-class DVOError(Exception):
-    """DVO related error."""
 
 
 def dvo_window(**kwargs) -> windows.WindowElement:
@@ -48,7 +50,7 @@ def open_application(path: str | None = None) -> None:
     try:
         windows.find_window("id:uiAnmeldung", timeout=15)
     except windows.ElementNotFound as e:
-        raise DVOError(
+        raise errors.DVOError(
             "Failed to detect login window after opening DVO!"
         ) from e
 
@@ -63,16 +65,26 @@ def close_application() -> None:
         )
 
         if close_app_popup is not None:
-            close_app_popup.find('name:"Ja" and class:Button').click()
+            close_app_popup.find('name:"Ja" and class:Button').click(
+                wait_time=1  # wait for DVO to close properly
+            )
+
+        if is_open(timeout=1):
+            _force_kill_dvo()
 
     except windows.ElementNotFound:
-        log.warn("Failed to close DVO app, trying to force kill it")
-        dvo_window().close_window()
+        log.warn("Failed to close DVO app, force killing it!")
+        _force_kill_dvo()
 
 
-def is_open() -> bool:
+def _force_kill_dvo() -> None:
+    """Force kill DVO."""
+    subprocess.run(["taskkill", "/f", "/im", "Studio.exe"], check=True)
+
+
+def is_open(timeout: int = 10) -> bool:
     """Return `True` if DVO is running, otherwise return `False`."""
-    return dvo_window(raise_error=False) is not None
+    return dvo_window(timeout=timeout, raise_error=False) is not None
 
 
 def login(
@@ -101,7 +113,7 @@ def login(
         _enter_credentials(
             username=username, password=password, timeout=timeout
         )
-    except DVOError:
+    except errors.DVOError:
         # Check if user is already logged in at another workstation
         login_failed = windows.find_window("id:uiAnmeldung").find(
             'name:"Anmeldung fehlgeschlagen"'
@@ -125,14 +137,14 @@ def login(
             time_popup.find('name:"Abbrechen"').click()
 
         sync_popup = dvo_window().find(
-            'subname:"Eine Synchronisation"', timeout=5, raise_error=False
+            'subname:"Outlook Integration"', timeout=4, raise_error=False
         )
         if sync_popup:
             sync_popup.get_parent().find('name:"OK" and class:Button').click()
 
     # Handle release notes
     if release_notes := dvo_window().find(
-        "id:uiReleasenotes", timeout=5, raise_error=False
+        "id:uiReleasenotes", timeout=4, raise_error=False
     ):
         release_notes.log_screenshot()
         log.info("A release notes popup appeared after opening DVO, closing it")
@@ -383,12 +395,12 @@ def find_task(filters: dict[str, str]) -> windows.ControlElement:
     rows = get_rows(group=group)
 
     if len(rows) > 1:
-        raise DVOError(
+        raise errors.DVOError(
             "More than one task left after applying filers! "
             f"Visible task rows after applying filters: {rows}"
         )
     elif len(rows) < 1:
-        raise DVOError("Could not find task matching given filters!")
+        raise errors.DVOError("Could not find task matching given filters!")
 
     # Open & Complete task
     return rows[0]
@@ -448,6 +460,8 @@ def forward_task(
         DVOError:
             If multiple tasks or no tasks are listed after applying the given
             filters.
+        DVOForwardTaskError:
+            If the task could not be saved.
 
     Returns:
         The task tab window element.
@@ -470,6 +484,23 @@ def forward_task(
         save_btn.click()
 
     close_tab()
+
+    # Check if task save was successful
+    unable_to_save_popup = dvo_window().find(
+        'name:"Speichern nicht möglich"', timeout=3, raise_error=False
+    )
+
+    if unable_to_save_popup:
+        # Close Pop-Up and DVO task to cleanup
+        unable_to_save_popup.find('name:"OK" and class:"Button"').click()
+        close_tab()
+
+        dvo_window().find('name:"Änderungen speichern"').find(
+            'name:"Nein" and class:"Button"'
+        ).click()
+        close_tab()
+
+        raise errors.DVOForwardTaskError("Unable to save DVO task!")
 
 
 def complete_task(filters: dict[str, str], test_mode: bool = False) -> None:
@@ -624,14 +655,13 @@ def upload_task_attachment_to_teamwork(
         time.sleep(5)
 
         teamwork_menu.find("id:btnAbbrechen").click()
-
-        attachment_menu.close_window(
-            use_close_button=True,
-            close_button_locator='name:"Schließen" and control:ButtonControl',
-        )
-
     else:
         btn_upload.click()
+
+    attachment_menu.close_window(
+        use_close_button=True,
+        close_button_locator='name:"Schließen" and control:ButtonControl',
+    )
 
     close_tab()
 
@@ -836,4 +866,4 @@ def _enter_credentials(
     try:
         dvo_window(timeout=timeout).find("name:Favoriten")
     except windows.ElementNotFound as e:
-        raise DVOError("Failed to perform DVO login!") from e
+        raise errors.DVOError("Failed to perform DVO login!") from e

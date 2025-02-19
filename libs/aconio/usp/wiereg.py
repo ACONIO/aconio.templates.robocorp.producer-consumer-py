@@ -101,22 +101,22 @@ class _WiEReG(USP):
     def extract_insert_stammzahl(self, stammzahl: str):
         """Insert "Stammzahl" into input field and press submit."""
         self._page.locator(
-            "[id='j_id_4b:j_id_4t:j_id_4u:sucherechtstraegerform_stammzahl']"
+            "[id='j_id_4d:j_id_4v:j_id_4w:sucherechtstraegerform_stammzahl']"
         ).fill(stammzahl)
-        self._page.locator("[id='j_id_4b:j_id_4t:j_id_4u:j_id_57']").click()
+        self._page.locator("[id='j_id_4d:j_id_4v:j_id_4w:j_id_59']").click()
 
         time.sleep(1)  # Wait for new page.
 
     def extract_create(self):
         """Download "einfach" extract."""
-        self._page.locator("[id='j_id_4c:auszug']").click()
+        self._page.locator("[id='j_id_4e:auszug']").click()
 
         time.sleep(5)  # Wait for document creation.
 
     def extract_save(self, filepath: str):
         """Save the downloaded extract to a file."""
         with self._page.expect_download() as download_info:
-            self._page.get_by_text("Speichern").click()
+            self._page.get_by_text("Speichern").nth(0).click()
 
         download = download_info.value
         download.save_as(filepath)

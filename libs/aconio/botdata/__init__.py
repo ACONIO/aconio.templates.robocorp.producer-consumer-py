@@ -33,7 +33,7 @@ import shutil
 import tempfile
 
 from aconio import azure
-from aconio.core import utils
+from aconio.utils import utils
 from aconio.botdata import _config as cfg
 
 from functools import lru_cache

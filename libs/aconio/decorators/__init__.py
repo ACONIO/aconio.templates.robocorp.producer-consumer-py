@@ -4,7 +4,7 @@ import functools
 
 from robocorp import workitems
 
-from aconio.core import errors
+from aconio.errors import errors
 
 
 def run_function(func):

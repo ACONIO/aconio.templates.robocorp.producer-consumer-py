@@ -6,8 +6,11 @@ import shutil
 import base64
 import locale
 
-from typing import Callable, Any
+from robocorp import storage
+from datetime import datetime
 from urllib.parse import quote
+
+from typing import Callable, Any
 
 
 def filter_none_and_join(lst: list, sep: str = " ") -> str:
@@ -198,3 +201,27 @@ def stringify_obj_attrs(item: object, default: str = "") -> object:
         else:
             setattr(item, field, default)
     return item
+
+
+def is_skip_day(day: datetime.date, cr_asset_name: str) -> bool:
+    """
+    Check if the current date is considered to be a "skip day".
+
+    Useful for defining days where bot runs shoud be skipped,
+    e.g. on public holidays or weekends. The days can be defined
+    in a Control Room asset.
+
+    Expected format of the Control Room asset:
+    ```json
+    ["21.01", "21.04", "01.05"]
+    ```
+
+    Args:
+        cr_asset_name:
+            Control Room asset holding the days which are considered
+            to be "skip days".
+
+    Returns:
+        `True` if the the current day is a "skip day", otherwise `False`.
+    """
+    return day.strftime("%d.%m") in storage.get_json(cr_asset_name)

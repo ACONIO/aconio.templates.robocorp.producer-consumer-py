@@ -80,36 +80,49 @@ https://learn.microsoft.com/en-us/office/vba/api/outlook.items.restrict#creating
 
 ### Using Robocorp's `RPA.Outlook.Application`
 If required, you can access the already existing features of the
-`RPA.Outlook.Application` library through the `_outlook()` function, which
+`RPA.Outlook.Application` library through the `app()` function, which
 always returns an instance of `RPA.Outlook.Application.Application`:
 ```python
 outlook.start()
-outlook._outlook().get_emails(folder_name="Gesendete Elemente")
+outlook.app().get_emails(folder_name="Gesendete Elemente")
 ```
 """
 
 import os
 import time
+import typing
+import datetime
 import functools
 import faulthandler
 
-from typing import Any
-from robocorp import windows
+import RPA.application
+import RPA.Outlook.Application
+import robocorp.windows as windows
 
-from RPA.application import COMError
-from RPA.Outlook.Application import Application as OutlookApp
+import aconio.utils as utils
+import aconio.outlook.types as types
+import aconio.outlook.errors as errors
 
-from aconio.core import utils
+# Disable `robocorp.windows` thread warning dumps
+faulthandler.disable()
 
-faulthandler.disable()  # Disable robocorp.windows thread warning dumps
+# Typedefs
+Any = typing.Any
+COMError = RPA.application.COMError
+OutlookApp = RPA.Outlook.Application.Application
 
 
 @functools.lru_cache
-def _outlook() -> OutlookApp:
+def app() -> OutlookApp:
     return OutlookApp()
 
 
-def start(retries: int = 3, delay: float = 5, minimize: bool = False) -> None:
+def start(
+    retries: int = 3,
+    delay: float = 5,
+    minimize: bool = False,
+    locator: str | None = None,
+) -> None:
     """Start the Outlook application.
 
     Add additional error handling capabilities around the `open_application`
@@ -128,25 +141,34 @@ def start(retries: int = 3, delay: float = 5, minimize: bool = False) -> None:
         minimize:
             Automatically minimize the Outlook application after a successful
             start. Defaults to False.
+        locator:
+            This parameter can override the default locator for the Outlook
+            application. For example can this parameter be used if the client
+            has a different language setting in his Outlook application.
     """
 
     # Quit any Outlook instances that may be open from previous runs to
     # prevent interference with the next application start
     try:
-        _outlook().quit_application()
+        app().quit_application()
     except:  # pylint: disable=bare-except
         pass
 
     windows.desktop().windows_run("Outlook")
 
+    outlook_locator = (
+        'subname:"Outlook" class:rctrl_renwnd32 > '
+        'subname:"Neue E-Mail" class:NetUIRibbonButton'
+    )
+
+    if locator:
+        outlook_locator = locator
+
     utils.wait_until_succeeds(
         retries=retries,
         timeout=delay,
         function=windows.desktop().find,
-        locator=(
-            'subname:"Outlook" class:rctrl_renwnd32 > '
-            'name:"Neue E-Mail" class:NetUIRibbonButton'
-        ),
+        locator=outlook_locator,
         search_depth=12,
     )
 
@@ -158,7 +180,7 @@ def start(retries: int = 3, delay: float = 5, minimize: bool = False) -> None:
     utils.wait_until_succeeds(
         retries=3,
         timeout=5,
-        function=_outlook().open_application,
+        function=app().open_application,
     )
 
     if minimize:
@@ -170,14 +192,15 @@ def start(retries: int = 3, delay: float = 5, minimize: bool = False) -> None:
 def send_email(
     subject: str,
     body: str,
-    to: str | list[str],
-    cc: str | list[str] = None,
-    bcc: str | list[str] = None,
+    to: str | list[str] | None,
+    cc: str | list[str] | None = None,
+    bcc: str | list[str] | None = None,
     html_body: bool = False,
-    sender: str = None,
-    attachments: list[str] = None,
+    send_as: str | None = None,
+    account: str | None = None,
+    attachments: list[str] | None = None,
     draft: bool = False,
-) -> bool:
+) -> str:
     """Send email via Outlook.
 
     Args:
@@ -194,23 +217,43 @@ def send_email(
         html_body:
             Determine if Outlook will interpret the given `body` as HTML.
             Defaults to `False`.
-        sender:
-            E-Mail address of the sender account. Note that the default account
-            configured in Outlook requires 'Send As' permissions on this
-            account.
+        send_as:
+            E-Mail address of the sender account. This uses the default account
+            configured in Outlook Desktop to send from the specified e-mail
+            address using the "Send As" permission. Cannot be used with the
+            `account` parameter.
+        account:
+            E-Mail address of the sender account. This assumes that the given
+            account is available in the Outlook Desktop app with "Full Access"
+            permissions and will use this account to send the e-mail. Cannot be
+            used with the `send_as` parameter.
         attachments:
             List of filepaths to e-mail attachments.
         draft:
             If `True`, the e-mail will not be sent and stored in the drafts
             folder. Defaults to `False`.
     """
+    if not to:
+        if draft:
+            to = []
+        else:
+            raise ValueError(
+                "Parameter `to` is None even though draft is false!"
+            )
 
     if not attachments:
         attachments = []
 
-    mail = _outlook().app.CreateItem(0)
+    mail = app().app.CreateItem(0)
     mail.To = ";".join(to) if isinstance(to, list) else to
     mail.Subject = subject
+
+    # Define a custom property (Tracking ID) using MAPI Named Property
+    email_id = str(
+        hash((subject, datetime.datetime.now().strftime("%d.%m.%y-%H:%M:%S")))
+    )
+
+    mail = _set_custom_property(mail, "EmailID", email_id)
 
     if cc:
         mail.CC = ";".join(cc) if isinstance(cc, list) else cc
@@ -218,12 +261,19 @@ def send_email(
     if bcc:
         mail.BCC = ";".join(bcc) if isinstance(bcc, list) else bcc
 
-    if sender:
-        # Event though the property is called 'SentOnBehalfOfName', this action
-        # requires the default account configured in Outlook to have the
-        # 'Send As' permission on the account specified with `sender`, which is
-        # different than the 'Send on Behalf' permission
-        mail.SentOnBehalfOfName = sender
+    if account and send_as:
+        raise ValueError(
+            "Parameters `account` and `send_as` cannot be used together!"
+        )
+
+    if account:
+        acc = get_account_by_email(account)
+        _configure_sender_account(mail, acc)
+
+    if send_as:
+        # Event though the property is called "SentOnBehalfOfName", this
+        # action will force the e-mail to be sent via the "Send As" permission.
+        mail.SentOnBehalfOfName = send_as
 
     if html_body:
         mail.HTMLBody = body
@@ -246,8 +296,31 @@ def send_email(
             mail.Save()
         else:
             mail.Send()
+
+        return email_id
     except COMError as exc:
-        raise RuntimeError("Failed to send e-mail due to COMError!") from exc
+        raise errors.from_com_error(exc) from exc
+
+
+def get_account_by_email(account_email: str) -> Any:
+    accounts = app().app.Session.Accounts
+    for i in range(1, accounts.Count + 1):
+        acc = accounts.Item(i)
+        if acc.SmtpAddress == account_email:
+            return acc
+    raise errors.AccountNotFoundError(
+        f"Could not find account with e-mail '{account_email}'!"
+    )
+
+
+def _configure_sender_account(mail: Any, account: Any) -> None:
+    """Configure the sender account for an Outlook `MailItem`."""
+
+    # Note: Setting the `SendUsingAccount` property on the mail object
+    # does not work. For some reason we have to invoke the actual VBA
+    # function using the below command.
+    # pylint: disable=protected-access
+    mail._oleobj_.Invoke(*(64209, 0, 8, 0, account))
 
 
 def save_email(
@@ -298,21 +371,18 @@ def delete_email(mail: Any) -> None:
 
 
 def filter_emails(
-    folder_name: str,
+    folder: Any,
     email_filter: str,
-    account_name: str = None,
     sort: tuple[str, bool] = None,
 ) -> list[Any]:
     """Find specific e-mails in an Outlook folder.
 
     Args:
-        folder_name:
-            Name of the Outlook folder to search.
+        folder:
+            Outlook folder object. Can be obtained via `get_folder_by_name` or
+            `get_folder_by_type`.
         email_filter:
             Outlook filter applied to find the desired E-Mail.
-        account_name:
-            Name of the Outlook account that holds the e-mail. Not required if
-            the desired account is the currently configured default account.
         sort:
             Tuple of (`str`, `bool`), where the first item must be an Outlook
             `MailItem` property (including brackets, e.g. '[SentOn]') and the
@@ -329,9 +399,8 @@ def filter_emails(
         AttributeError:
             If the given `email_filter` is invalid.
     """
-    # pylint: disable=protected-access
-    folder = _outlook()._get_folder(account_name, folder_name)
-    folder_mails = folder.Items if folder else []
+
+    folder_mails = folder.Items
 
     try:
         mails = folder_mails.Restrict(email_filter)
@@ -347,8 +416,130 @@ def filter_emails(
     return mails
 
 
+def get_email_with_id(folder: Any, email_id: str) -> Any:
+    """
+    Return a MailItem from Outlook with a given ID.
+
+    This function uses custom `MAPI` properties to identify an email with an ID.
+
+    Args:
+        folder:
+            The folder where to search for the email.
+        email_id:
+            The set ID of the email.
+
+    Returns:
+        Any:
+            The email for with given email_id.
+
+    Raises:
+        MailNotFoundError:
+            If no mail can be found for the given email_id.
+
+    """
+
+    folder_mails = folder.Items
+
+    for mail in folder_mails:
+        tracking_id = mail.PropertyAccessor.GetProperty(
+            "http://schemas.microsoft.com/mapi/string/{00020329-0000-0000-C000-000000000046}/EmailID"  # pylint: disable=line-too-long
+        )
+
+        if tracking_id:
+            if tracking_id == email_id:
+                return mail
+
+    raise errors.MailNotFoundError(
+        f"Could not find E-Mail with ID: {email_id} in folder: {folder}"
+    )
+
+
+def get_folder_by_type(
+    folder_type: types.FolderType, account_name: str | None = None
+) -> Any:
+    """Get an Outlook folder by its type.
+
+    Args:
+        folder_type:
+            Enum value representing the Outlook folder type.
+
+    Returns:
+        Any:
+            Outlook folder object.
+
+    Raises:
+        ValueError:
+            If the given `folder_type` cannot be found in Outlook.
+    """
+
+    if account_name:
+        account = get_account_by_email(account_name)
+        folder = account.DeliveryStore.GetDefaultFolder(folder_type.value)
+    else:
+        folder = app().app.Session.GetDefaultFolder(folder_type.value)
+
+    if not folder:
+        msg = f"Failed to obtain folder with type '{folder_type.name}'"
+
+        if account_name:
+            msg += f" from account '{account_name}'."
+        else:
+            msg += "from default account."
+        raise errors.FolderNotFoundError(msg)
+
+    return folder
+
+
+def get_folder_by_name(folder_name: str, account_name: str | None) -> Any:
+    """Get an Outlook folder by its name.
+
+    Args:
+        folder_name:
+            Name of the Outlook folder to search.
+        account_name:
+            Name of the Outlook account that holds the folder. Not required if
+            the desired account is the currently configured default account.
+
+    Returns:
+        Any:
+            Outlook folder object.
+
+    Raises:
+        ValueError:
+            If the folder with the given properties cannot be found in Outlook.
+    """
+
+    # pylint: disable=protected-access
+    folder = app()._get_folder(account_name, folder_name)
+
+    if not folder:
+        msg = f"Failed to obtain folder with name '{folder_name}'"
+
+        if account_name:
+            msg += f" from account '{account_name}'."
+        else:
+            msg += "from default account."
+
+        raise errors.FolderNotFoundError(msg)
+
+    return folder
+
+
 def is_open():
     """Return `True` if the Outlook application is open."""
-    if _outlook()._app:  # pylint: disable=protected-access
+    if app()._app:  # pylint: disable=protected-access
         return True
     return False
+
+
+def _set_custom_property(
+    mail: Any, property_name: str, property_value: str
+) -> Any:
+
+    mail.PropertyAccessor.SetProperty(
+        "http://schemas.microsoft.com/mapi/string/{00020329-0000-0000-C000-000000000046}/"  # pylint: disable=line-too-long
+        + property_name,
+        property_value,
+    )
+
+    return mail

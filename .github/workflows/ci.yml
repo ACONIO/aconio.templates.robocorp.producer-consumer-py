@@ -1,16 +1,13 @@
-name: Integration
+name: Reusable Integration Workflow
 
 on:
-  pull_request:
-    branches:
-    - main
-    - 'release/**'
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
-    lint:
+    Lint:
       runs-on: ubuntu-latest
       steps:
       - uses: actions/checkout@v4
@@ -24,13 +21,23 @@ jobs:
           pip install pylint
       - name: Analysing the code with pylint
         run: |
-          pylint --rcfile=pylintrc $(git ls-files '*.py')
-    spellcheck:
-        name: spellcheck
+          pylint --rcfile=pylintrc $(git ls-files 'bot/*.py')
+    Spellcheck:
         runs-on: ubuntu-latest
         steps:
-        - uses: actions/checkout@v4
-        - uses: rojopolis/spellcheck-github-actions@0.41.0
-          name: spellcheck
-          with: 
-            config_path: .spellcheck.yaml
+          - name: Checkout workflows repository 
+            uses: actions/checkout@v4
+            with:
+              repository: 'ACONIO/aconio.common.workflows'
+              token: ${{ secrets.ACONIO_PAT }}
+              path: workflows
+          
+          - name: Checkout code repository 
+            uses: actions/checkout@v4
+            with:
+              path: main
+          
+          - uses: rojopolis/spellcheck-github-actions@0.41.0
+            name: spellcheck
+            with: 
+              config_path: workflows/spellcheck/.spellcheck.yaml

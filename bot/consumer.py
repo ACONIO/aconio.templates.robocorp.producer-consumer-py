@@ -2,7 +2,7 @@
 
 import functools
 
-from aconio.core import decorators
+from aconio import decorators
 
 from bot import _items, _config
 

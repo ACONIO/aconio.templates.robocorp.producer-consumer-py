@@ -7,7 +7,7 @@ import jinja2 as j2
 from datetime import datetime
 
 from aconio import outlook
-from aconio.core import decorators
+from aconio import decorators
 
 from robocorp import workitems
 

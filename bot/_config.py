@@ -7,7 +7,7 @@ import pydantic
 
 import functools
 
-from aconio.core import errors
+from aconio import errors
 
 _config_path = None
 

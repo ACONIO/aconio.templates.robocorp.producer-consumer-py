@@ -45,3 +45,23 @@ def list_work_items(
         ]
 
     return work_items
+
+
+def get_work_item(
+    workspace_id: str,
+    work_item_id: str,
+) -> dict:
+    """Return a work item.
+
+    Args:
+        workspace_id:
+            The workspace id of the control room.
+        work_item_id:
+            The id of the work item.
+    """
+
+    work_item = api().get(
+        route=f"/workspaces/{workspace_id}/work-items/{work_item_id}",
+    )
+
+    return work_item

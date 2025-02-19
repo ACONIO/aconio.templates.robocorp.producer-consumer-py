@@ -1,4 +1,11 @@
 """Useful DAO functions."""
 
-from aconio.dao import client
-from aconio.dao import employee
+from aconio.dao.client import (
+    BMDSachbearbeiter,
+    EmployeeSelectionMode,
+    Employee,
+    ContactPersonType,
+    ContactPerson,
+    Client,
+    ClientDAO,
+)

@@ -167,12 +167,15 @@ def _services_to_csv(services: list[BMDService], file: str) -> None:
             writer.writerow([data[const_id] for const_id in const_ids])
 
 
-def import_services(services: list[BMDService]) -> None:
+def import_services(services: list[BMDService], timeout: int = 8) -> None:
     """Import services ('Leistungen') into BMD via 'Standard-CSV' import.
 
     Args:
         services:
             List of services to import.
+        timeout:
+            Maximum time in seconds to wait for the import to finish.
+            Defaults to 8 seconds.
     """
     import_file = _utils.create_import_file("import_services.csv")
     _services_to_csv(services, import_file)
@@ -188,11 +191,26 @@ def import_services(services: list[BMDService]) -> None:
             "STP_SILENTSUCCESS": "1",
         },
     )
-    time.sleep(2)
+    time.sleep(2)  # Minimum time for service import
 
-    # Validate logfile
-    logfile = logfiles.BMDLogfile.from_file(
-        os.path.join(config().log_dir, "StdCSVImport.log")
+    # Periodically check logfile for success until timeout is reached
+    for _ in range(timeout // 2):
+        logfile = logfiles.BMDLogfile.from_file(
+            os.path.join(config().log_dir, "StdCSVImport.log")
+        )
+
+        try:
+            if logfile.check_success():
+                return
+            else:
+                raise RuntimeError(
+                    "BMD log file indicates failed services import!"
+                )
+        except logfiles.LogValidationError:
+            pass
+
+        time.sleep(2)
+
+    raise RuntimeError(
+        "Timeout reached while waiting for services import to finish!"
     )
-    if not logfile.check_success():
-        raise RuntimeError("BMD log file indicates failed services import!")

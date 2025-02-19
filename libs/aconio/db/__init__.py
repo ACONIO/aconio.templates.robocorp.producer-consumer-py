@@ -1,10 +1,9 @@
 """MSSQL database connection manager."""
 
-from __future__ import annotations
-
 import pymssql
+import robocorp.vault
 
-from robocorp import vault
+from abc import abstractmethod
 
 
 class Config:
@@ -28,6 +27,14 @@ class Config:
         )
 
 
+class BaseConnection:
+    """Base database connection manager."""
+
+    @abstractmethod
+    def execute_query_from_file(self, sql_filepath: str, **kwargs) -> dict:
+        raise NotImplementedError
+
+
 class MSSQLConnection:
     """MSSQL database connection manager."""
 
@@ -35,7 +42,7 @@ class MSSQLConnection:
         self._cfg = None
         self._conn = None
 
-    def configure(self, cfg: Config) -> MSSQLConnection:
+    def configure(self, cfg: Config) -> "MSSQLConnection":
         """Configure MSSQL DB connection parameters.
 
         Args:
@@ -44,7 +51,7 @@ class MSSQLConnection:
         self._cfg = cfg
         return self
 
-    def configure_from_vault(self, secret_name: str) -> MSSQLConnection:
+    def configure_from_vault(self, secret_name: str) -> "MSSQLConnection":
         """Load DB config from Robocorp vault.
 
         The names of the properties of the secret must adhere to the following
@@ -64,7 +71,7 @@ class MSSQLConnection:
 
         cfg = Config()
 
-        secret = vault.get_secret(secret_name)
+        secret = robocorp.vault.get_secret(secret_name)
 
         if "server" in secret:
             cfg.server = secret["server"]

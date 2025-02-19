@@ -1,8 +1,8 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.2
 Name: aconio
-Version: 2.0
+Version: 3.0
 Summary: Create 🐍 automations in no time with Robocorp & Aconio!
-Author-email: Patrick Krukenfellner <patrick.krukenfellner@aconio.net>, Matthias Reumann <matthias.reumann@tum.de>
+Author-email: Patrick Krukenfellner <patrick.krukenfellner@aconio.net>, Stephan Arthold <stephan.arthold@aconio.net>, Matthias Reumann <matthias.reumann@aconio.net>
 Project-URL: Homepage, https://github.com/ACONIO/aconio
 Keywords: python,automation,rpa
 Classifier: Development Status :: 5 - Production/Stable
@@ -73,6 +73,12 @@ $ source venv/bin/activate # on Windows: venv/Scripts/activate
 $ pip install --require-virtualenv .
 ```
 
+If you do not have a Python installation available on the current development environment, you can use `rcc` to build the virtual environment from the `conda.yaml` file contained in the project:
+```console
+$ rcc venv conda.yaml
+```
+
+
 ### Style 
 When contributing to the project, please adhere to the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
 
@@ -105,5 +111,8 @@ python -m robocorp.tasks run tests/<module>/tests.py
 
 To only run a specific task within a `tests.py` file, specify the task with the `-t` parameter:
 ```bash
-RC_VAULT_SECRET_MANAGER="FileSecrets" RC_VAULT_SECRET_FILE="./secrets.json" python -m robocorp.tasks run tests/dao/tests_client.py -t test_get_client_contact_person
+RC_VAULT_SECRET_MANAGER="FileSecrets" RC_VAULT_SECRET_FILE="./vault.json" python -m robocorp.tasks run tests/outlook/tests.py -t test_outlook_locator
+
+# If you need to use the control room assets
+RC_WORKSPACE_ID="<workspaceid>" RC_API_URL_V1="https://api.eu1.robocorp.com/v1/" RC_API_TOKEN_V1="<token>" python -m robocorp.tasks run tests/core/tests.py -t test_skip_days
 ```
