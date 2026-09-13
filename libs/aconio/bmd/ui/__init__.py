@@ -2,7 +2,7 @@
 
 from robocorp import windows, log
 
-from aconio.core import utils
+from aconio import utils
 from aconio.bmd import cli, _errors
 from aconio.bmd._config import config
 
@@ -18,6 +18,8 @@ def close_tab() -> None:
 
 
 def open_application(
+    timeout: float = 3,
+    retries: int = 6,
     executable: cli.BMDExecutable | None = None,
     params: dict[str, str] | None = None,
     ui_login: bool = False,
@@ -25,6 +27,12 @@ def open_application(
     """Open the BMD application.
 
     Args:
+        retries:
+            Number of times trying to find the BMD window. One retry is
+            equal to waiting 10 seconds for the BMD window to appear.
+            Defaults to `6`.
+        timout:
+            Thr number of seconds to wait between searching the BMD window.
         executable:
             A custom NTCS executable. Per default, the BMD executable set via
             the module configuration will be started. Therefore, parameters
@@ -54,7 +62,7 @@ def open_application(
     if ui_login:
         _perform_ui_login()
 
-    _wait_for_bmd_window()
+    _wait_for_bmd_window(retries=retries, timeout=timeout)
 
 
 def _perform_ui_login() -> None:
@@ -82,57 +90,87 @@ def _perform_ui_login() -> None:
     login_window.find('name:"Anmelden" and class:TBMDButton').click()
 
 
-def _wait_for_bmd_window() -> None:
+def _wait_for_bmd_window(
+    retries: int = 6, timeout: float = 3, update_multiplier: int = 10
+) -> None:
     """Wait for the BMD window to appear.
+
+    Args:
+        retries:
+            Number of times trying to find the BMD window. One retry is
+            equal to waiting 10 seconds for the BMD window to appear.
+            Defaults to `6`.
+        timout:
+            Thr number of seconds to wait between searching the BMD window.
+        update_multiplier:
+            Multiplier for the number of retries in case a BMD update is
+            detected. This is used to wait longer for the BMD window to
+            appear due to an update. Defaults to `10`.
 
     Raises:
         BMDError:
-            If the BMD window does not appear after after waiting for 50
-            seconds, or 500 seconds in case a BMD update is performed.
+            If the BMD window does not appear after after waiting for 60
+            seconds (or 600 seconds in case a BMD update is performed).
     """
 
-    max_wait_seconds = 60
-
-    if _find_update_notification():
-        log.warn("BMD update notification detected.")
-        max_wait_seconds = 600
-
-    retries = 10
-    wait_between_retries = max_wait_seconds / retries
-
     try:
+        utils.wait_until_succeeds(retries, 0, _find_bmd_window)
+    except _errors.BMDUpdateDetectedError:
+        log.warn("BMD update notification detected.")
+
+        retries = retries * update_multiplier
         utils.wait_until_succeeds(
-            retries, wait_between_retries, _find_bmd_window
+            retries, timeout, _find_bmd_window, detect_updates=False
         )
+
     except windows.ElementNotFound:
-        # pylint: disable-next=raise-missing-from
+        # pylint: disable=raise-missing-from
         raise _errors.BMDError(
             "Failed to detect BMD window or update notification!"
         )
 
 
-def _find_update_notification() -> windows.WindowElement | None:
+def _find_bmd_window(detect_updates: bool = True) -> None:
+    """Raise if the BMD window is not found.
+
+    Args:
+        detect_updates:
+            If `True`, an error is raised if the BMD update
+            notification is detected. Defaults to `True`.
+
+    Raises:
+        BMDError:
+            If the BMD window is not found.
+        BMDUpdateDetectedError:
+            If the BMD update notification is detected. Can be
+            disabled using `detect_updates=False`.
+    """
+
+    # For detecting update loading screens or version info dialogs,
+    # we purposefully set the timeout to 1 second to ensure that
+    # these checks do not cost too much time.
+
+    if detect_updates:
+        if _detect_bmd_update(timeout=1):
+            raise _errors.BMDUpdateDetectedError(
+                "BMD update notification detected."
+            )
+
+    _handle_version_info_dialog(timeout=1)
+    window()
+
+
+def _detect_bmd_update(timeout: int = 10) -> windows.WindowElement | None:
     """Find the BMD update notification window."""
-    # Here we keep the default timeout of 10 seconds to ensure enough
-    # time passes for the update notification to appear.
     return windows.desktop().find(
-        "class:TBMDNCMultiProgressFRM", raise_error=False
+        "class:TBMDNCMultiProgressFRM", raise_error=False, timeout=timeout
     )
 
 
-def _find_bmd_window() -> None:
-    """Raise if the BMD window is not found."""
-    # Within this function and `_catch_version_dialog`, we purposefully
-    # set the robocorp.windows timeout to 0 seconds to ensure that the
-    # wait times defined in `_wait_for_bmd_window` are depicted correctly.
-    _catch_version_dialog()
-    window(timeout=0)
-
-
-def _catch_version_dialog() -> None:
+def _handle_version_info_dialog(timeout: int = 10) -> None:
     """Catch the BMD version dialog and close it if it appears."""
     version_dialog = windows.desktop().find(
-        'subname:"Neue Version gefunden"', raise_error=False, timeout=0
+        'subname:"Neue Version gefunden"', raise_error=False, timeout=timeout
     )
 
     if version_dialog:

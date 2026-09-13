@@ -1,20 +1,19 @@
 """Interactions with the WEBEKU service."""
 
 import re
+import bs4
 import time
+import enum
 import datetime
 import functools
+import dataclasses
 
-from dataclasses import dataclass
-from enum import StrEnum
+import robocorp.browser
 
-from bs4 import BeautifulSoup
-from robocorp import browser
-
-from ._usp import USP
+from aconio.usp._usp import USP
 
 
-class Action(StrEnum):
+class Action(enum.StrEnum):
     """Represent the available WE-BE-KU actions for an account."""
 
     KONTOINFORMATIONEN = "K"
@@ -23,7 +22,7 @@ class Action(StrEnum):
     AGH = "A"
 
 
-@dataclass
+@dataclasses.dataclass
 class Account:
     """Represent a "Beitragskonto" on the WE-BE-KU page."""
 
@@ -190,7 +189,7 @@ class WEBEKU(USP):
             filepath=filepath,
         )
 
-    def __download_file(self, locator: browser.Locator, filepath: str):
+    def __download_file(self, locator: robocorp.browser.Locator, filepath: str):
         """Download a file from the WE-BE-KU portal using the given locator.
 
         Expand all rows of the table and download a file, where the given
@@ -235,7 +234,7 @@ class WEBEKU(USP):
     def __read_accounts_table(self) -> list[Account]:
         """Parse all "Beitragskonten" from the "Kontoübersicht" table."""
 
-        soup = BeautifulSoup(self.__webeku.content(), "html.parser")
+        soup = bs4.BeautifulSoup(self.__webeku.content(), "html.parser")
 
         accounts: list[Account] = []
         for row in soup.find("tbody").find_all(
@@ -259,4 +258,4 @@ class WEBEKU(USP):
 @functools.lru_cache
 def webeku() -> WEBEKU:
     """Return a new WEBEKU instance."""
-    return WEBEKU(debug=False)
+    return WEBEKU()

@@ -14,6 +14,12 @@ class BMDParam:
     key: str
     value: str | None = None
 
+    def __post_init__(self):
+        if self.value is not None and not isinstance(self.value, str):
+            raise TypeError(
+                f"Value for parameter '{self.key}' must be string or None!"
+            )
+
     def __str__(self) -> str:
         if self.value:
             return f"/{self.key}={self.value}"

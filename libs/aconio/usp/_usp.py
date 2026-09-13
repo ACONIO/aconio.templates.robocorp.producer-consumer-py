@@ -2,43 +2,47 @@
 
 import os
 
-from robocorp import vault, browser
+import robocorp.browser
+
+from aconio.usp.models import USPCredentials
+from aconio.usp._config import config
 
 
 class USP:
     """Base class for any USP task."""
 
-    _base_url = "https://mein.usp.gv.at/"
+    def __init__(
+        self,
+        base_url="https://mein.usp.gv.at/",
+    ) -> None:
 
-    def __init__(self, debug: bool = False) -> None:
+        self.base_url = base_url
+
         # Enable Playwright debug mode
-        if debug:
+        if config().browser_debug:
             os.environ["PWDEBUG"] = "1"
 
-        browser.configure_context(viewport={"width": 1800, "height": 900})
+        robocorp.browser.configure_context(
+            viewport={"width": 1800, "height": 900}
+        )
 
-        self._context = browser.context()
-        self._page = browser.page()
+        self._context = robocorp.browser.context()
+        self._page = robocorp.browser.page()
 
-    def login_usp(self, vault_secret: str = "usp_credentials") -> None:
+    def login_usp(self, creds: USPCredentials) -> None:
         """Login to USP.
 
-        Open the browser, navigate to `_base_url`, and login.
+        Open the browser, navigate to the base URL, and login.
 
         Args:
-            vault_secret (str):
-                The name of the Robocorp vault secret to use.
-                The provided Robocorp vault secret must include the keys
-                - `teilnehmer_id`
-                - `benutzer_id`
-                - `pin`.
+            credentials (USPCredentials):
+                The credentials to use for the login.
         """
-        self._page.goto(self._base_url)
+        self._page.goto(self.base_url)
 
-        creds = vault.get_secret(vault_secret)
-        self._page.locator("[id=tid]").fill(creds["teilnehmer_id"])
-        self._page.locator("[id=benid]").fill(creds["benutzer_id"])
-        self._page.locator("[id=pin]").fill(creds["pin"])
+        self._page.locator("[id=tid]").fill(creds.participant_id)
+        self._page.locator("[id=benid]").fill(creds.user_id)
+        self._page.locator("[id=pin]").fill(creds.pin)
         self._page.locator("[id=kc-login]").click()
 
     def pause(self) -> None:

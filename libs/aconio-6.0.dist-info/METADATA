@@ -1,0 +1,147 @@
+Metadata-Version: 2.4
+Name: aconio
+Version: 6.0
+Summary: Create 🐍 automations in no time with Robocorp & Aconio!
+Author-email: Patrick Krukenfellner <patrick.krukenfellner@aconio.net>, Stephan Arthold <stephan.arthold@aconio.net>, Matthias Reumann <matthias.reumann@aconio.net>
+Project-URL: Homepage, https://github.com/ACONIO/aconio
+Keywords: python,automation,rpa
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: <3.12,>=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: robocorp>=2.0.0
+Requires-Dist: robocorp-browser>=2.3.1
+Requires-Dist: robocorp-windows>=1.0.3
+Requires-Dist: jinja2>=3.1.3
+Requires-Dist: mss>=6.1.0
+Requires-Dist: numpy>=1.26.0
+Requires-Dist: opencv-python>=4.6.0
+Requires-Dist: pynput>=1.7.6
+Requires-Dist: pymssql>=2.2.5
+Requires-Dist: azure-storage-file-share>=12.15.0
+Requires-Dist: rpaframework>=28.5.1
+Requires-Dist: rpaframework-recognition>=5.2.3
+Requires-Dist: requests>=2.32.2
+Requires-Dist: pydantic>=2.7.0
+
+# Elevate your 🐍 Python Automations with the `aconio` Automation Library 🛠️
+
+*This library serves as the foundation for implementing RPA automations at Aconio.*
+
+It aims to provide a vast amount of pre-built functionality that is essential for automating business processes efficiently.
+
+We try to achieve that by "closing the gap" between the general RPA functionality available through [Robocorp](https://github.com/robocorp/robocorp/) and the various different applications in the tax domain (BMD, FinanzOnline, DVO, ...).
+
+Each application has its own unique interface and requirements, which the `aconio` library aims to standardize and simplify for automation purposes. Depending on the application, this may be achieved by utilizing UI automation, Desktop API's, REST API's, Databases, Browser Automation, etc.
+
+The complexity of `aconio`'s submodules ranges from very simple to more complex - here are some examples:
+- Simple **utility modules**, for example [`botdata`](aconio/botdata/__init__.py), which helps our bots to easily store data in a temporary directory during robot runs. Or [`delay`](aconio/delay/__init__.py) for introducing a global delay factor in your automation workflows.
+- **Integrations** with tax-applications, for example the [`bmd`](aconio/bmd/__init__.py) library for handling interactions with the BMD business software, or [`fon`](aconio/fon/__init__.py) for interacting with FinanzOnline.
+- Modules for **supporting more complex automation workflows**, for example [`state_tracking`](aconio/state_tracking/__init__.py), which allows us to keep track of how far certain work items have been processed by a bot, using [Robocorp Control Room Assets](https://sema4.ai/docs/automation/control-room/asset-storage), to prevent our automations from performing redundant actions.
+
+> In a nutshell, the `aconio` library offers a comprehensive set of tools and integrations for **automating business processes in the tax domain**, bridging the gap between general RPA functionality and the specific interfaces of common tax applications.
+
+## Usage
+Including the `aconio` library in a robot project as a dependency has some caveats. Because we do not want to make the library publicly accessible via PyPI, there is no option to include the dependency in the `conda.yaml` file of the robot project.
+
+While there's the option for "code sharing" via [Git Subtree](https://www.atlassian.com/git/tutorials/git-subtree) recommended by Robocorp, we decided to avoid this approach since it can alter the commit history in various ways and also allows developers of the main project (in that case the robot repository) to directly push changes to the subtree repository (in this case the `aconio` library), which is something we want to avoid because it interferes with the versioning and workflow of the `aconio` library.
+
+Because of that, when including the `aconio` library in your project, we recommend installing it via a `pip install` into the `libs` directory of the robot.
+
+```bash
+pip install git+https://$GITHUB_TOKEN@github.com/ACONIO/aconio.git@v0.0.1-alpha --no-deps --target libs/
+```
+
+> [!TIP]
+> We recommend installing `aconio` using the [Install Script](#install-script), rather than manually running the `pip install` command.
+> 
+> It is still recommended to read through this section to understand how the installation works and what the caveats are.
+
+After installation, the bot project contains a local copy of a specific version of the `aconio` library in the `libs` directory. The local copy can be changed without affecting the original `aconio` repository.
+
+This is sometimes quite useful for quickly deploying hotfixes in bot projects, without having to pull **all new changes** of the aconio library, or for testing new features directly integrated into a bot project, before releasing them in the official `aconio` repository.
+
+As you can see, a `GITHUB_TOKEN` must be provided so `pip install` can pull from a private Github repository. You can choose the library version you want to pull, simply by specifying the git tag (in this case `v0.0.1-alpha`).
+
+Before installing the dependency, it is recommended to first perform a dry run and omit the `--no-deps` option. By doing this, **pip** will try to install all dependencies of the `aconio` library rather than only the library itself, and then throw an error if dependency requirements of the `aconio` library differ from the dependencies in your robot project (for example, if `aconio` uses a different `robocorp-browser` version than your project):
+
+```bash
+pip install --dry-run git+https://$GITHUB_TOKEN@github.com/ACONIO/aconio.git@v0.0.1-alpha --target libs/
+```
+
+The `--dry-run` option will prevent **pip** from actually installing the libraries in the `libs` folder, so you can first perform the dry run and check if the dependencies of the library match the ones of your project, and then continue to install the `aconio` library.
+
+> **Note:** Once the `pip install` is done, you need to add the `libs` folder to your `PYTHONPATH` in `robot.yaml` in order for VSCode to recognize the newly installed modules.
+
+### Updating
+To update the `aconio` library, simply delete it from the `libs` folder and run the above commands again with the desired git tag specified.
+
+### Install Script
+It is recommended to use the `scripts/install.py` install script in bot projects, instead of the manual `pip install` commands.
+
+The script will automatically perform a dry-run of the install to verify dependencies, and then proceed with the actual installation if everything is in order.
+
+Simply copy the `scripts/install.py` script into your bot project and run it to install the `aconio` library:
+
+```bash
+rcc task script -- python install.py <git_tag> <github_token>
+```
+
+> [!NOTE]  
+> The `rcc task script --` prefix can only be used in bot projects, when a Robocorp [Holotree](https://github.com/robocorp/rcc/blob/master/docs/environment-caching.md) environment is active. It will utilize the Python executable shipped within the Holotree environment to run the command.
+
+
+## Contributing
+Please adhere to the following guidelines when contributing to the project.
+
+### Install Dependencies
+Create a Python virtual environment (in `.venv`) and install all dependencies defined in `uv.lock`:
+
+```bash
+uv sync
+```
+
+Since we're using `uv`, a system Python installation is not required. Installing `uv` is explained [here](https://docs.astral.sh/uv/getting-started/installation/).
+
+### Update dependencies
+New dependencies can be added to `pyproject.toml` using the following command:
+```bash
+uv add <your-dependency>
+```
+
+### Style 
+When contributing to the project, please adhere to the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
+
+Also, make sure to use the respective `.vscode/settings.json` and `pylintrc` files for Python from the [`aconio.common.vscode-settings`](https://github.com/ACONIO/aconio.common.vscode-settings) repository.
+
+### Testing
+For testing the individual `aconio` modules, we use Robocorp's `tasks` library, which provides a neat interface for testing.
+
+Use the following command to run the test cases of a specific module:
+
+```bash
+# Replace <module> with the module you want to test
+uv run python -m robocorp.tasks run tests/<module>/tests.py
+```
+
+To only run a specific task within a `tests.py` file, specify the task with the `-t` parameter:
+```bash
+uv run python -m robocorp.tasks run tests/<module>/tests.py -t <taskname>
+```
+
+If you need to grab secrets from a local vault file, specify `RC_VAULT_SECRET_MANAGER` and store your secrets in a `secrets.json` file in the project root (you can also specify a different secrets file with `RC_VAULT_SECRET_FILE` but that only works with absolute paths and makes the command quite long):
+```bash
+RC_VAULT_SECRET_MANAGER="FileSecrets" uv run python -m robocorp.tasks run tests/bmd/dao/tests.py -t test_set_by_contact_person
+```
+
+If you need to use Control Room assets, specify the `RC_WORKSPACE_ID`, `RC_API_URL_V1`, and `RC_API_TOKEN_V1` env vars:
+```bash
+RC_WORKSPACE_ID="<workspace_id>" RC_API_URL_V1="https://api.eu1.robocorp.com/v1/" RC_API_TOKEN_V1="<token>" uv run python -m robocorp.tasks run tests/state_tracking/tests.py
+```
+
+To generate an API token for the `RC_API_TOKEN_V1` env var, use:
+```bash
+rcc cloud authorize -w <workspace_id> -m 30
+```

@@ -1,6 +1,7 @@
 """Handling of documents and interaction with the BMD archive."""
 
 import os
+import locale
 import dataclasses
 
 from datetime import datetime
@@ -117,12 +118,19 @@ def _documents_to_dok(
 
     lines = []
     for doc in docs:
+
+        new_path = _remove_special_characters(doc)
+
+        if doc.path != new_path:
+            os.rename(doc.path, new_path)
+
+            doc.path = new_path
+
         line = f"{doc.bmddocs_row()}$EOD${optional_args}"
         log.info(f"Adding line to 'bmddocs.dok' import file: '{line}'")
         lines.append(line)
 
-    # pylint: disable=unspecified-encoding
-    with open(file, "w") as f:
+    with open(file, mode="w", errors="replace", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
 
@@ -174,3 +182,33 @@ def import_bmddocs(
         bmd.window().find('name:"Achtung" class:TBMDMessageBoxFRM').find(
             'name:"Ok" class:TButton'
         ).click()
+
+
+def _remove_special_characters(doc: DMSDocument):
+    """
+    This function handles special characters in a filename.
+
+    This function is necessary to ensure the import of the document
+    works with every character of any encoding.
+
+    The function useses the default encoding of the machine to determine
+    if a character is valid for the import or not and if so
+    removes it from the filename.
+
+    Args:
+        doc: The DMS document for the import.
+
+    Returns:
+        The filepath without any special characters.
+    """
+
+    directory = os.path.dirname(doc.path)
+    new_path = os.path.join(
+        directory,
+        os.path.basename(doc.path)
+        .encode(locale.getencoding(), errors="replace")
+        .decode(locale.getencoding(), errors="replace")
+        .replace("?", ""),
+    )
+
+    return new_path

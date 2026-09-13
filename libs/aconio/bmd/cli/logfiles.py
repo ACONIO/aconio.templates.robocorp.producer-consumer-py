@@ -10,6 +10,10 @@ from datetime import datetime
 from dataclasses import dataclass
 
 
+class LogValidationError(Exception):
+    """Error raised when a log validation fails."""
+
+
 @dataclass
 class BMDLogEntry:
     """An entry within a BMD log file."""
@@ -148,7 +152,7 @@ class BMDLogfile:
         for entry in self.entries:
             if max_message_age:
                 if entry.age > max_message_age:
-                    raise RuntimeError(
+                    raise LogValidationError(
                         "Log messages in the given timeframe did not match "
                         "the success, nor the failure criteria!"
                     )
@@ -163,7 +167,7 @@ class BMDLogfile:
             else:
                 entry_cnt += 1
                 if entry_cnt >= max_entries:
-                    raise RuntimeError(
+                    raise LogValidationError(
                         "Max entries reached. Log messages did not match the "
                         "success, nor the failure criteria!"
                     )

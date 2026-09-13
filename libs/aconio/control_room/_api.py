@@ -3,16 +3,18 @@
 import json
 import time
 import requests
-import functools
-from urllib.parse import urljoin
+import urllib.parse
 
 from typing import Any
 
-from ._config import config
+from aconio.control_room.config import ControlRoomConfig
 
 
-class _ControlRoomAPI:
+class _ControlRoomAPIWrapper:
     """Wrapper for the Robocorp Control Room API."""
+
+    def __init__(self, config: ControlRoomConfig) -> None:
+        self.config = config
 
     def get(
         self,
@@ -125,9 +127,9 @@ class _ControlRoomAPI:
         """
 
         if kwargs.get("headers") is not None:
-            kwargs["headers"].update(config().auth_header)
+            kwargs["headers"].update(self.config.auth_header)
         else:
-            kwargs["headers"] = config().auth_header
+            kwargs["headers"] = self.config.auth_header
 
         for i in range(retries):
             # pylint: disable=missing-timeout
@@ -175,7 +177,7 @@ class _ControlRoomAPI:
         return collected_data
 
     def _get_cr_endpoint_from_route(self, route: str) -> str:
-        return urljoin(config().endpoint, route.lstrip("/"))
+        return urllib.parse.urljoin(self.config.endpoint, route.lstrip("/"))
 
     def _raise_client_error(self, response: requests.Response) -> None:
         body = json.loads(response.text)
@@ -190,8 +192,3 @@ class _ControlRoomAPI:
             f"Code: {cr_err_code} - {cr_err_sub_code}\n"
             f"Message: {cr_err_msg}\n"
         )
-
-
-@functools.lru_cache
-def api() -> _ControlRoomAPI:
-    return _ControlRoomAPI()
