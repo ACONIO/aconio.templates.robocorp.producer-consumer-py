@@ -33,7 +33,7 @@ Add the according VS-Code settings to your project from our [VS-Code Settings Re
 If the `aconio` library version of the template respository is not the newest version, use the `scripts/install_aconio.py` script to update the `aconio` library to the latest version.
 
 ```bash
-python scripts/install_aconio.py <git_tag> <github_token>
+rcc task script -- python scripts/install_aconio.py <git_tag> <github_token>
 ```
 
 ### 4. Resolve `TODO`'s
