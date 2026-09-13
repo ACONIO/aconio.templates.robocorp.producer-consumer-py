@@ -1,0 +1,88 @@
+{
+  "$defs": {
+    "ActionsConfig": {
+      "additionalProperties": false,
+      "description": "Actions performed by the process.",
+      "properties": {
+        "send_email": {
+          "title": "Send Email",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "send_email"
+      ],
+      "title": "ActionsConfig",
+      "type": "object"
+    },
+    "ReportConfig": {
+      "additionalProperties": false,
+      "description": "Configuration options for the process report.",
+      "properties": {
+        "recipients": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Recipients",
+          "type": "array"
+        },
+        "contact": {
+          "title": "Contact",
+          "type": "string"
+        }
+      },
+      "required": [
+        "recipients",
+        "contact"
+      ],
+      "title": "ReportConfig",
+      "type": "object"
+    },
+    "WorkItemsConfig": {
+      "additionalProperties": false,
+      "description": "Configuration options related to work-item creation.",
+      "properties": {
+        "max_cnt": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Cnt"
+        }
+      },
+      "title": "WorkItemsConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Process Configurations",
+  "properties": {
+    "actions": {
+      "$ref": "#/$defs/ActionsConfig"
+    },
+    "work_items": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/WorkItemsConfig"
+        }
+      ],
+      "default": {
+        "max_cnt": null
+      }
+    },
+    "report": {
+      "$ref": "#/$defs/ReportConfig"
+    }
+  },
+  "required": [
+    "actions",
+    "report"
+  ],
+  "title": "Config",
+  "type": "object"
+}
