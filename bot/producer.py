@@ -1,15 +1,9 @@
-"""Functions utilized by the producer process."""
+"""Producer core logic."""
 
-import functools
+import robocorp.log
 
-from robocorp import log
-
-from bot import _items, _config
-
-
-@functools.lru_cache
-def config() -> _config.ProducerConfig:
-    return _config.ProducerConfig()
+import bot._items as _items
+import bot._config as _config
 
 
 def setup() -> None:
@@ -29,11 +23,10 @@ def run() -> list[_items.Item]:
 
     # TODO: Implement producer
 
-    if config().max_work_items:
-        log.warn(
-            "Max work items set - only creating "
-            f"{config().max_work_items} work items!"
+    if max_work_items := _config.config().work_items.max_cnt:
+        robocorp.log.warn(
+            f"Max work items set - only creating {max_work_items} work items!"
         )
-        return work_items[: int(config().max_work_items)]
+        return work_items[:max_work_items]
     else:
         return work_items

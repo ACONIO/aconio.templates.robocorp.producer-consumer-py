@@ -1,22 +1,16 @@
-"""Functions utilized by the reporter process."""
+"""Reporter core logic."""
 
+import time
+import jinja2 as j2
+import datetime
 import functools
 
-import jinja2 as j2
+import robocorp.workitems
 
-from datetime import datetime
+import aconio.outlook
+import aconio.decorators
 
-from aconio import outlook
-from aconio.core import decorators
-
-from robocorp import workitems
-
-from bot import _config
-
-
-@functools.lru_cache
-def config() -> _config.ReporterConfig:
-    return _config.ReporterConfig()
+import bot._config as _config
 
 
 @functools.lru_cache
@@ -27,37 +21,43 @@ def jinja() -> j2.Environment:
 def setup() -> None:
     """Setup reporter process."""
 
-    outlook.start(minimize=True)
+    aconio.outlook.start(minimize=True)
 
     jinja().loader = j2.FileSystemLoader("templates")
     jinja().undefined = j2.StrictUndefined
 
 
 def teardown() -> None:
+
+    # This time.sleep() is necessary because of a bug where outlook
+    # gets closed before an email can be sent. This timeout should give
+    # Outlook enough time to send the last email properly.
+    time.sleep(5)
     pass
 
 
-@decorators.run_function
-def run(items: list[workitems.Input]):
+@aconio.decorators.run_function
+def run(items: list[robocorp.workitems.Input]):
     """Send a process report for failed work items."""
 
     content = generate_report(
         items=items,
-        contact=config().contact,
+        contact=_config.config().report.contact,
     )
 
     # TODO: Insert correct e-mail subject
-    outlook.send_email(
-        to=config().recipients,
-        subject=f"Process Report {datetime.today().strftime('%d.%m.%Y')}",
+    today = datetime.datetime.today().strftime("%d.%m.%Y")
+    aconio.outlook.send_email(
+        to=_config.config().report.recipients,
+        subject=f"Process Report {today}",
         body=content,
         html_body=True,
-        draft=config().test_mode,
+        draft=_config.config().actions.send_email is False,
     )
 
 
 def generate_report(
-    items: list[workitems.Input],
+    items: list[robocorp.workitems.Input],
     contact: str,
 ) -> str:
     """Create a process report.

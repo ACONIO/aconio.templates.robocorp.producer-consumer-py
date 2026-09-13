@@ -2,25 +2,27 @@
 
 import faulthandler
 
+import robocorp.tasks
+import robocorp.workitems
+
+import aconio.botdata
+
 import bot.consumer
 import bot.producer
 import bot.reporter
 
-from robocorp import workitems, tasks
-
-from aconio import botdata
-
-from bot import _items, _config
+import bot._items as _items
+import bot._config as _config
 
 faulthandler.disable()
 
 
-@tasks.setup(scope="task")
+@robocorp.tasks.setup(scope="task")
 def before_each(tsk):
 
     # TODO: Insert correct process name, or remove if not temporary directory
     # is required
-    botdata.create("<process_name>")  # Temporary robot directory
+    aconio.botdata.create("<process_name>")  # Temporary robot directory
 
     _config.load()
     _config.config().dump()
@@ -34,7 +36,7 @@ def before_each(tsk):
             bot.reporter.setup()
 
 
-@tasks.teardown(scope="task")
+@robocorp.tasks.teardown(scope="task")
 def after_each(tsk):
     match tsk.name:
         case "producer":
@@ -45,7 +47,7 @@ def after_each(tsk):
             bot.reporter.teardown()
 
 
-@tasks.task
+@robocorp.tasks.task
 def producer():
     """Create output work items for the consumer."""
 
@@ -53,17 +55,17 @@ def producer():
         _items.create_rc_wi_from_pydantic_model(item)
 
 
-@tasks.task
+@robocorp.tasks.task
 def consumer():
     """Process all the work items created by the producer."""
 
-    for item in workitems.inputs:
+    for item in robocorp.workitems.inputs:
         with item:
             bot.consumer.run(_items.Item.model_validate(item.payload))
 
 
-@tasks.task
+@robocorp.tasks.task
 def reporter():
     """Report expected failures (BREs) to the employee."""
 
-    bot.reporter.run(items=list(workitems.inputs))
+    bot.reporter.run(items=list(robocorp.workitems.inputs))
