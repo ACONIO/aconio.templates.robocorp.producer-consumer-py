@@ -1,22 +1,52 @@
 """Robot configuration management."""
 
-import os
+from __future__ import annotations
+
 import sys
 import yaml
 import pydantic
 
 import functools
 
-from aconio.core import errors
+import bot._env as _env
 
-_config_path = None
+_config = None
+
+
+@functools.lru_cache
+def config() -> Config:
+    if _config is None:
+        raise RuntimeError("Config not loaded! Call `load()` first.")
+    return _config
+
+
+def load() -> None:
+    """Load the bot configuration.
+
+    **Requirements**
+    - The environment variable `ENVIRONMENT` must be set to one of the
+    following values: [`"dev"`, `"test"`, `"prod"`].
+    - In case of `"test"` or `"prod"` environment: The environment variable
+    `AZURE_CONFIG_DIR` must be set to the Azure Files directory where the
+    YAML config files are stored.
+    """
+    global _config
+
+    with open(_env.get_yaml_config_path(), encoding="UTF-8") as stream:
+        try:
+            data = yaml.safe_load(stream)
+            _config = Config(**data)
+        except yaml.YAMLError as exc:
+            raise RuntimeError("Failed to load YAML config!") from exc
 
 
 class CustomBase(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(
-        extra="forbid", use_enum_values=True, arbitrary_types_allowed=True
+        extra="forbid",
+        use_enum_values=True,
+        coerce_numbers_to_str=True,
+        arbitrary_types_allowed=True,
     )
-    model_config = pydantic.ConfigDict(coerce_numbers_to_str=True)
 
 
 class Config(CustomBase):
@@ -25,34 +55,6 @@ class Config(CustomBase):
     # TODO Create config
     pass
 
-
-def set_config_path(path: str) -> None:
-    """Set the path to the configuration file.
-
-    Args:
-        path:
-            The path to the `.yaml` configuration file.
-    """
-    globals()["_config_path"] = path
-
-
-@functools.lru_cache
-def config() -> Config:
-    with open(_config_path, encoding="UTF-8") as stream:
-        try:
-            data = yaml.safe_load(stream)
-            return Config(**data)
-        except yaml.YAMLError as exc:
-            raise errors.ApplicationError(
-                "Failed to load YAML config!"
-            ) from exc
-
-
-def dump() -> None:
-    """Print the configuration."""
-    yaml.dump(config().model_dump(exclude_unset=True), sys.stdout)
-
-
-def env() -> str:
-    """Return the execution environment ("dev" | "test" | "prod")."""
-    return os.environ.get("ENVIRONMENT").lower()
+    def dump(self) -> None:
+        """Print the loaded configuration."""
+        yaml.dump(self.model_dump(exclude_unset=True), sys.stdout)
