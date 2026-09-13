@@ -49,11 +49,41 @@ class CustomBase(pydantic.BaseModel):
     )
 
 
+class ActionsConfig(CustomBase):
+    """Actions performed by the process."""
+
+    send_email: bool
+    """
+    If enabled, the bot will send the generated e-mails.
+    
+    If disabled, all generated e-mails will only be stored
+    as drafts in Outlook.
+    """
+
+
+class WorkItemsConfig(CustomBase):
+    """Configuration options related to work-item creation."""
+
+    max_cnt: int | None = None
+    """Maximum amount of work items created by the producer."""
+
+
+class ReportConfig(CustomBase):
+    """Configuration options for the process report."""
+
+    recipients: list[str]
+    """List of e-mail addresses receiving the process report."""
+
+    contact: str
+    """Contact e-mail at Aconio for any inquiries."""
+
+
 class Config(CustomBase):
     """Process Configurations"""
 
-    # TODO Create config
-    pass
+    actions: ActionsConfig
+    work_items: WorkItemsConfig = WorkItemsConfig()
+    report: ReportConfig
 
     def dump(self) -> None:
         """Print the loaded configuration."""
