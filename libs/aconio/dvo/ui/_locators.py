@@ -36,6 +36,10 @@ class DVOLocators:
         return self._image("open_attachment.png")
 
     @property
+    def upload_teamwork(self) -> str:
+        return self._image("upload_teamwork.png")
+
+    @property
     def complete_task(self) -> str:
         return self._image("complete_task.png")
 

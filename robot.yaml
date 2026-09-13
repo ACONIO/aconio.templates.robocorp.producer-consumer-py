@@ -16,13 +16,9 @@ devTasks:
   Generic Test:
     shell: python -m robocorp.tasks run tests.py -t test_generic
 
-  # rcc run -e "devdata/env-testing.json" --dev --task "Test DB-Query"
-  Test DB-Query:
-    shell: python -m robocorp.tasks run tests.py -t test_db_query
-
-  # rcc run -e "devdata/env-testing.json" --dev --task "Test Create Email"
-  Test Create Email:
-    shell: python -m robocorp.tasks run tests.py -t test_create_email
+  # rcc run --dev --task "Generate Config JSON Schema"
+  Generate Config JSON Schema:
+    shell: python -m robocorp.tasks run scripts.py -t generate_json_schema
 
 environmentConfigs:
   - environment_windows_amd64_freeze.yaml

@@ -3,14 +3,21 @@
 import os
 import time
 import functools
+import subprocess
 import faulthandler
 
-from robocorp import windows, log
-from pynput_robocorp import keyboard
+import RPA.Desktop
+import robocorp.log as log
+import robocorp.windows as windows
+import pynput_robocorp.keyboard as keyboard
 
-from RPA.Desktop import Desktop
+import aconio.utils
+import aconio.dvo.ui._locators as dvo_locators
+import aconio.dvo.errors as errors
 
-from aconio.dvo.ui._locators import locators
+# Typedefs
+Desktop = RPA.Desktop.Desktop
+locators = dvo_locators.locators
 
 faulthandler.disable()
 
@@ -18,10 +25,6 @@ faulthandler.disable()
 @functools.lru_cache
 def _desktop() -> Desktop:
     return Desktop()
-
-
-class DVOError(Exception):
-    """DVO related error."""
 
 
 def dvo_window(**kwargs) -> windows.WindowElement:
@@ -48,7 +51,7 @@ def open_application(path: str | None = None) -> None:
     try:
         windows.find_window("id:uiAnmeldung", timeout=15)
     except windows.ElementNotFound as e:
-        raise DVOError(
+        raise errors.DVOError(
             "Failed to detect login window after opening DVO!"
         ) from e
 
@@ -63,16 +66,26 @@ def close_application() -> None:
         )
 
         if close_app_popup is not None:
-            close_app_popup.find('name:"Ja" and class:Button').click()
+            close_app_popup.find('name:"Ja" and class:Button').click(
+                wait_time=1  # wait for DVO to close properly
+            )
+
+        if is_open(timeout=1):
+            _force_kill_dvo()
 
     except windows.ElementNotFound:
-        log.warn("Failed to close DVO app, trying to force kill it")
-        dvo_window().close_window()
+        log.warn("Failed to close DVO app, force killing it!")
+        _force_kill_dvo()
 
 
-def is_open() -> bool:
+def _force_kill_dvo() -> None:
+    """Force kill DVO."""
+    subprocess.run(["taskkill", "/f", "/im", "Studio.exe"], check=True)
+
+
+def is_open(timeout: int = 10) -> bool:
     """Return `True` if DVO is running, otherwise return `False`."""
-    return dvo_window(raise_error=False) is not None
+    return dvo_window(timeout=timeout, raise_error=False) is not None
 
 
 def login(
@@ -101,7 +114,7 @@ def login(
         _enter_credentials(
             username=username, password=password, timeout=timeout
         )
-    except DVOError:
+    except errors.DVOError:
         # Check if user is already logged in at another workstation
         login_failed = windows.find_window("id:uiAnmeldung").find(
             'name:"Anmeldung fehlgeschlagen"'
@@ -125,14 +138,14 @@ def login(
             time_popup.find('name:"Abbrechen"').click()
 
         sync_popup = dvo_window().find(
-            'subname:"Eine Synchronisation"', timeout=5, raise_error=False
+            'subname:"Outlook Integration"', timeout=4, raise_error=False
         )
         if sync_popup:
             sync_popup.get_parent().find('name:"OK" and class:Button').click()
 
     # Handle release notes
     if release_notes := dvo_window().find(
-        "id:uiReleasenotes", timeout=5, raise_error=False
+        "id:uiReleasenotes", timeout=4, raise_error=False
     ):
         release_notes.log_screenshot()
         log.info("A release notes popup appeared after opening DVO, closing it")
@@ -383,12 +396,12 @@ def find_task(filters: dict[str, str]) -> windows.ControlElement:
     rows = get_rows(group=group)
 
     if len(rows) > 1:
-        raise DVOError(
+        raise errors.DVOError(
             "More than one task left after applying filers! "
             f"Visible task rows after applying filters: {rows}"
         )
     elif len(rows) < 1:
-        raise DVOError("Could not find task matching given filters!")
+        raise errors.DVOError("Could not find task matching given filters!")
 
     # Open & Complete task
     return rows[0]
@@ -448,6 +461,8 @@ def forward_task(
         DVOError:
             If multiple tasks or no tasks are listed after applying the given
             filters.
+        DVOForwardTaskError:
+            If the task could not be saved.
 
     Returns:
         The task tab window element.
@@ -470,6 +485,23 @@ def forward_task(
         save_btn.click()
 
     close_tab()
+
+    # Check if task save was successful
+    unable_to_save_popup = dvo_window().find(
+        'name:"Speichern nicht möglich"', timeout=3, raise_error=False
+    )
+
+    if unable_to_save_popup:
+        # Close Pop-Up and DVO task to cleanup
+        unable_to_save_popup.find('name:"OK" and class:"Button"').click()
+        close_tab()
+
+        dvo_window().find('name:"Änderungen speichern"').find(
+            'name:"Nein" and class:"Button"'
+        ).click()
+        close_tab()
+
+        raise errors.DVOForwardTaskError("Unable to save DVO task!")
 
 
 def complete_task(filters: dict[str, str], test_mode: bool = False) -> None:
@@ -509,11 +541,11 @@ def complete_task(filters: dict[str, str], test_mode: bool = False) -> None:
     close_tab()
 
 
-def open_task_attachment_menu(filters: dict[str, str]) -> windows.WindowElement:
-    """Find a DVO "Aufgabe" and open the attached document menu.
+def open_task_attachment(filters: dict[str, str]) -> None:
+    """Find a DVO "Aufgabe" and open the attached document.
 
-    For opening the actual document attached to the task, use
-    `open_task_attachment`.
+    This opens the document attached to the DVO task using the according
+    application defined on the system for opening documents of that type.
 
     It is expected that this function is executed while in the DVO main view,
     without the "Aufgaben" tab already being open. Furthermore, the "Aufgaben"
@@ -529,47 +561,12 @@ def open_task_attachment_menu(filters: dict[str, str]) -> windows.WindowElement:
         DVOError:
             If multiple tasks or no tasks are listed after applying the given
             filters.
-
-    Returns:
-        The attachment menu window element.
     """
+
     task_row = find_task(filters=filters)
     task_row.right_click(wait_time=3)
 
     _desktop().click(locators().open_attachment)
-
-    return dvo_window().find_child_window("id:uiDokument")
-
-
-def open_task_attachment(filters: dict[str, str]) -> None:
-    """Find a DVO "Aufgabe" and open the attached document.
-
-    This opens the actual document attached to the DVO task with the according
-    application defined on the system for opening documents of that type. For
-    only opening the DVO menu of the attached document, use
-    `open_task_attachment_menu`.
-
-    It is expected that this function is executed while in the DVO main view,
-    without the "Aufgaben" tab already being open. Furthermore, the "Aufgaben"
-    navbar item must be added to "Favoriten".
-
-    Args:
-        filters:
-            Key/value pairs of DVO "Aufgaben" view column names and filter
-            values to identify the correct "Aufgabe". Example column names
-            are: 'Betriebsnummer', 'Periode', 'Aufgabeart'.
-
-    Raises:
-        DVOError:
-            If multiple tasks or no tasks are listed after applying the given
-            filters.
-    """
-
-    attachment_menu = open_task_attachment_menu(filters=filters)
-
-    dok_group = attachment_menu.find('name:"Dokument" and control:GroupControl')
-
-    dok_group.find('name:"Anzeigen" and control:DataItemControl').click()
 
 
 def upload_task_attachment_to_teamwork(
@@ -577,14 +574,16 @@ def upload_task_attachment_to_teamwork(
 ) -> None:
     """Find a DVO "Aufgabe" perform a Teamwork upload for the attachment.
 
-    This opens the actual document attached to the DVO task with the according
-    application defined on the system for opening documents of that type. For
-    only opening the DVO menu of the attached document, use
-    `open_task_attachment_menu`.
+    This opens the task menu and uploads the attached document to Teamwork.
 
     It is expected that this function is executed while in the DVO main view,
     without the "Aufgaben" tab already being open. Furthermore, the "Aufgaben"
     navbar item must be added to "Favoriten".
+
+    ### Important Note:
+    Currently, this function only supports uploading a single document.
+    If more than one document is attached to the task, an error will be
+    raised. If no document is attached, an error will also be raised.
 
     Args:
         filters:
@@ -605,12 +604,30 @@ def upload_task_attachment_to_teamwork(
             filters.
     """
 
-    attachment_menu = open_task_attachment_menu(filters=filters)
+    task_menu = open_task(filters=filters)
+    attachment_group = task_menu.find("id:ugrpAttach")
 
-    # Teamwork upload menu takes some time to load
-    attachment_menu.find('name:"Upload Teamwork"').click(wait_time=15)
+    # Select the first attachment in the list
+    document_rows = get_rows(attachment_group)
 
-    teamwork_menu = attachment_menu.find("id:uiTeamworkUpload")
+    if len(document_rows) < 1:
+        raise errors.DVOError(
+            "No documents attached to the task! Cannot upload to Teamwork!"
+        )
+    elif len(document_rows) > 1:
+        raise errors.DVOError(
+            "Multiple documents attached to the task! "
+            "Teamwork upload only allowed for single documents!"
+        )
+    else:
+        document_rows[0].right_click(wait_time=3)
+
+    # Open Teamwork upload menu and wait for it to load properly
+    _desktop().click(locators().upload_teamwork)
+    time.sleep(2)
+
+    teamwork_menu = dvo_window().find("id:uiTeamworkUpload")
+
     teamwork_menu.find("id:cmdSelectFolder").click(wait_time=2)
     teamwork_menu.find('id:uiTeamworkStruktur > name:"Bilanz"').click()
     teamwork_menu.find('id:uiTeamworkStruktur > name:"Übernehmen"').click(
@@ -624,16 +641,11 @@ def upload_task_attachment_to_teamwork(
         time.sleep(5)
 
         teamwork_menu.find("id:btnAbbrechen").click()
-
-        attachment_menu.close_window(
-            use_close_button=True,
-            close_button_locator='name:"Schließen" and control:ButtonControl',
-        )
-
     else:
         btn_upload.click()
 
-    close_tab()
+    for _ in range(2):
+        close_tab()
 
 
 def save_task_attachment(filters: dict[str, str], filepath: str) -> None:
@@ -684,11 +696,6 @@ def save_task_attachment(filters: dict[str, str], filepath: str) -> None:
     save_window.find('name:"Speichern" and class:Button').click()
 
     edge.close_window()
-
-    dvo_window().find_child_window("id:uiDokument").close_window(
-        use_close_button=True,
-        close_button_locator='name:"Schließen" and control:ButtonControl',
-    )
 
     close_tab()
 
@@ -834,6 +841,14 @@ def _enter_credentials(
 
     # Wait for the DVO window to verify that the login was successful
     try:
-        dvo_window(timeout=timeout).find("name:Favoriten")
+        retries = timeout // 10
+        aconio.utils.wait_until_succeeds(
+            retries,
+            0,
+            dvo_window(timeout=timeout).find,
+            'name:"Datei" control:"MenuItemControl"',
+        )
+
+        time.sleep(2)  # Wait for the DVO window to load properly
     except windows.ElementNotFound as e:
-        raise DVOError("Failed to perform DVO login!") from e
+        raise errors.DVOError("Failed to perform DVO login!") from e

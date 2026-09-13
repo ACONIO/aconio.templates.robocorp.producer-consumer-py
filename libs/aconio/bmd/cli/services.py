@@ -148,8 +148,7 @@ def _services_to_csv(services: list[BMDService], file: str) -> None:
     const_ids = BMDService.bmd_const_ids()
     column_names = BMDService.bmd_column_names()
 
-    # pylint: disable=unspecified-encoding
-    with open(file, "w", newline="") as csvfile:
+    with open(file, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(
             csvfile, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL
         )
@@ -167,15 +166,25 @@ def _services_to_csv(services: list[BMDService], file: str) -> None:
             writer.writerow([data[const_id] for const_id in const_ids])
 
 
-def import_services(services: list[BMDService]) -> None:
+def import_services(
+    services: list[BMDService], timeout: int = 8, use_log_file: bool = True
+) -> None:
     """Import services ('Leistungen') into BMD via 'Standard-CSV' import.
 
     Args:
         services:
             List of services to import.
+        timeout:
+            Maximum time in seconds to wait for the import to finish.
+            Defaults to 8 seconds.
+        use_log_file:
+            Determines if the logfile should be used to check the success of
+            the service import.
     """
     import_file = _utils.create_import_file("import_services.csv")
     _services_to_csv(services, import_file)
+
+    before_import_time = datetime.now()
 
     ntcs_cli().run_function(
         function_name="MCS_BATCH_IMPORT_CSV",
@@ -188,11 +197,33 @@ def import_services(services: list[BMDService]) -> None:
             "STP_SILENTSUCCESS": "1",
         },
     )
-    time.sleep(2)
+    time.sleep(timeout)  # Minimum time for service import
 
-    # Validate logfile
-    logfile = logfiles.BMDLogfile.from_file(
-        os.path.join(config().log_dir, "StdCSVImport.log")
-    )
-    if not logfile.check_success():
-        raise RuntimeError("BMD log file indicates failed services import!")
+    if use_log_file:
+        # Periodically check logfile for success until timeout is reached
+        for _ in range(timeout // 2):
+            logfile = logfiles.BMDLogfile.from_file(
+                os.path.join(config().log_dir, "StdCSVImport.log")
+            )
+
+            try:
+                delta = datetime.now() - before_import_time
+                seconds_in_between = int(delta.total_seconds())
+
+                if logfile.check_success(max_message_age=seconds_in_between):
+                    return
+                else:
+                    raise RuntimeError(
+                        "BMD log file indicates failed services import!"
+                    )
+
+            except logfiles.LogValidationError:
+                pass
+
+            time.sleep(2)
+
+        raise RuntimeError(
+            "Timeout reached while waiting for services import to finish!"
+        )
+
+    return before_import_time

@@ -2,7 +2,7 @@
 
 Example:
 ```python
-from aconio import botdata
+import aconio.botdata as botdata
 
 # Create '/my/bot/dir' and robot temp & config directories
 botdata.create(name='vz_process', root='/my/bot/dir')
@@ -14,8 +14,8 @@ botdata.config_dir()    # '/my/bot/dir/vz_process/config'
 # Load the process configuration form an Azure file share into
 # '/my/bot/dir/vz_process/config'
 botdata.load_process_config_from_azure(
-    storage_dir_path: 'bot_configs/vz_process/some_client', 
-    account_url: 'https://robocorpstorage.file.core.windows.net/', 
+    storage_dir_path: 'bot_configs/vz_process/some_client',
+    account_url: 'https://robocorpstorage.file.core.windows.net/',
     share_name: 'robocorp-files',
     access_key: 'MY_ACCESS_KEY',
 )
@@ -32,8 +32,8 @@ import os
 import shutil
 import tempfile
 
-from aconio import azure
-from aconio.core import utils
+import aconio.utils
+
 from aconio.botdata import _config as cfg
 
 from functools import lru_cache
@@ -147,6 +147,13 @@ def load_process_config_from_azure(
         access_key:
             Azure storage account access key.
     """
+
+    # TODO: We moved the import here to avoid automatic import of the
+    # 'aconio.azure' module when importing 'aconio.botdata'. This is
+    # to reduce the number of required dependencies. However is a case
+    # of code smell, we should consider moving this function.
+    from aconio import azure  # pylint: disable=import-outside-toplevel
+
     # Use 'config_dir()', which throws an error if the user hasn't already
     # created the robot data directory with 'create()'
     shutil.rmtree(config_dir())
@@ -168,7 +175,7 @@ def load_process_config_from_azure(
 
 def cleanup_temp() -> None:
     """Remove all files in the temporary robot directory."""
-    utils.cleanup_folder(temp_dir=temp_dir())
+    aconio.utils.cleanup_folder(temp_dir=temp_dir())
 
 
 def _check_base_dir():

@@ -1,15 +1,8 @@
-"""Functions utilized by the consumer process."""
+"""Consumer core logic."""
 
-import functools
+import aconio.decorators
 
-from aconio.core import decorators
-
-from bot import _items, _config
-
-
-@functools.lru_cache
-def config() -> _config.ConsumerConfig:
-    return _config.ConsumerConfig()
+import bot._items as _items
 
 
 def setup() -> None:
@@ -22,8 +15,8 @@ def teardown() -> None:
     pass
 
 
-@decorators.attach_reporter
-@decorators.run_function
+@aconio.decorators.attach_reporter
+@aconio.decorators.run_function
 def run(item: _items.Item):
     """Processes a single work item."""
     print(item)
